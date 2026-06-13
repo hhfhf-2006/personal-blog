@@ -1,1 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: my-blog-postgres
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog123456
+      POSTGRES_DB: blog_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/000001_init_schema.sql:/docker-entrypoint-initdb.d/000001_init_schema.sql
 
+volumes:
+  postgres_data:
