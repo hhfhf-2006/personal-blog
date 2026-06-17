@@ -39,3 +39,30 @@ func (d *UserDAO) FindByUsername(username string) (*model.User, error) {
 
 	return &user, nil
 }
+
+func (d *UserDAO) FindByID(id int64) (*model.User, error) {
+	var user model.User
+
+	err := d.db.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// FindByIDs 批量查询用户，返回 map[id]*User
+func (d *UserDAO) FindByIDs(ids []int64) (map[int64]*model.User, error) {
+	if len(ids) == 0 {
+		return map[int64]*model.User{}, nil
+	}
+	var users []model.User
+	if err := d.db.Where("id IN ?", ids).Find(&users).Error; err != nil {
+		return nil, err
+	}
+	result := make(map[int64]*model.User, len(users))
+	for i := range users {
+		result[users[i].ID] = &users[i]
+	}
+	return result, nil
+}

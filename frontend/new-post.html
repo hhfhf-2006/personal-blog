@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>写文章 — 我的博客</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-title">我的博客</a>
+    <nav>
+      <ul class="nav-links" id="navLinks"></ul>
+    </nav>
+  </div>
+</header>
+
+<main class="main-content editor-page">
+  <div class="post-list-header">
+    <h1 id="pageTitle">写文章</h1>
+  </div>
+
+  <form id="postForm" onsubmit="handleSubmit(event)">
+    <div class="form-group" id="titleGroup">
+      <label for="title">标题</label>
+      <input type="text" id="title" placeholder="输入文章标题…" maxlength="200" required>
+      <span class="error-msg" id="titleError"></span>
+    </div>
+
+    <div class="form-group" id="contentGroup">
+      <label for="content">内容</label>
+      <div class="editor-tabs">
+        <button type="button" class="editor-tab active" id="tabEdit" onclick="switchTab('edit')">编辑</button>
+        <button type="button" class="editor-tab" id="tabPreview" onclick="switchTab('preview')">预览</button>
+      </div>
+      <textarea id="content" placeholder="支持 Markdown：# 标题、**粗体**、`代码`、[链接](url)…" required></textarea>
+      <div id="previewPane" class="editor-preview" style="display:none;"></div>
+      <span class="error-msg" id="contentError"></span>
+    </div>
+
+    <div style="display:flex;gap:var(--gap-md);">
+      <button type="submit" class="btn btn-primary" id="submitBtn">发布</button>
+      <a href="/" class="btn btn-secondary">取消</a>
+      <button type="button" class="btn btn-danger btn-sm" id="btnDelete" style="display:none;margin-left:auto;"
+        onclick="deletePost()">删除</button>
+    </div>
+  </form>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 我的博客
+</footer>
+
+<script src="/js/common.js"></script>
+<script>
+/* ============================================================
+   写文章 / 编辑文章
+   ============================================================ */
+
+// 未登录 → 跳转登录页（带上回调地址）
+if (!isLoggedIn()) {
+  goToLogin();
+}
+
+const editID = getQueryParam('edit'); // 编辑模式：?edit=文章ID
+
+async function init() {
+  updateHeader();
+
+  if (editID) {
+    document.getElementById('pageTitle').textContent = '编辑文章';
+    document.getElementById('submitBtn').textContent = '保存修改';
+    document.getElementById('btnDelete').style.display = 'inline-flex';
+
+    try {
+      const data = await api.get(`/posts/${editID}`);
+      const post = data.data;
+      document.getElementById('title').value = post.title;
+      document.getElementById('content').value = post.content;
+    } catch (err) {
+      showToast('加载文章失败：' + err.message, 'error');
+    }
+  }
+}
+
+function showFieldError(field, msg) {
+  const group = document.getElementById(field + 'Group');
+  const error = document.getElementById(field + 'Error');
+  if (msg) {
+    group.classList.add('has-error');
+    error.textContent = msg;
+  } else {
+    group.classList.remove('has-error');
+    error.textContent = '';
+  }
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  const title = document.getElementById('title').value.trim();
+  const content = document.getElementById('content').value.trim();
+
+  showFieldError('title', '');
+  showFieldError('content', '');
+
+  let valid = true;
+  if (!title || title.length > 200) {
+    showFieldError('title', '标题需要 1~200 个字符');valid = false;
+  }
+  if (!content) {
+    showFieldError('content', '请输入文章内容');valid = false;
+  }
+  if (!valid) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '提交中…';
+  btn.disabled = true;
+
+  try {
+    if (editID) {
+      await api.put(`/posts/${editID}`, { title, content });
+      showToast('文章已更新！');
+    } else {
+      await api.post('/posts', { title, content });
+      showToast('文章发布成功！');
+    }
+    setTimeout(() => { window.location.href = '/'; }, 500);
+  } catch (err) {
+    btn.textContent = editID ? '保存修改' : '发布';
+    btn.disabled = false;
+    showToast(err.message, 'error');
+  }
+}
+
+async function deletePost() {
+  if (!editID) return;
+  if (!confirm('确定要删除这篇文章吗？此操作不可撤销。')) return;
+
+  try {
+    await api.delete(`/posts/${editID}`);
+    showToast('文章已删除');
+    setTimeout(() => { window.location.href = '/'; }, 500);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+/* —— 编辑器标签切换 + 实时预览 —— */
+
+let activeTab = 'edit';
+
+function switchTab(tab) {
+  activeTab = tab;
+  const textarea = document.getElementById('content');
+  const preview = document.getElementById('previewPane');
+  const tabEdit = document.getElementById('tabEdit');
+  const tabPreview = document.getElementById('tabPreview');
+
+  if (tab === 'edit') {
+    textarea.style.display = 'block';
+    preview.style.display = 'none';
+    tabEdit.classList.add('active');
+    tabPreview.classList.remove('active');
+  } else {
+    // 切换到预览：解析 textarea 内容为 HTML
+    marked.setOptions({ breaks: true, gfm: true });
+    preview.innerHTML = marked.parse(textarea.value)
+      || '<p style="color:var(--text-muted);">还没有内容…</p>';
+    textarea.style.display = 'none';
+    preview.style.display = 'block';
+    tabPreview.classList.add('active');
+    tabEdit.classList.remove('active');
+  }
+}
+
+// 编辑时自动更新预览（如果预览可见）
+document.getElementById('content').addEventListener('input', function () {
+  if (activeTab === 'preview') {
+    marked.setOptions({ breaks: true, gfm: true });
+    const preview = document.getElementById('previewPane');
+    preview.innerHTML = marked.parse(this.value)
+      || '<p style="color:var(--text-muted);">还没有内容…</p>';
+  }
+});
+
+// 提交前确保切回编辑模式，避免校验时找不着 textarea
+const origSubmit = handleSubmit;
+handleSubmit = async function(e) {
+  if (activeTab === 'preview') switchTab('edit');
+  return origSubmit(e);
+};
+
+init();
+</script>
+
+</body>
+</html>

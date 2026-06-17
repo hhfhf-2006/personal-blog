@@ -2,6 +2,8 @@ package server
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"personal-blog-backend/internal/svc"
 
@@ -16,19 +18,46 @@ func NewHTTPServer(ctx *svc.ServiceContext) *gin.Engine {
 
 	RegisterRoutes(r, ctx)
 
+	// —— 静态文件服务：把前端 HTML/CSS/JS 直接托管 ——
+	frontendDir := findFrontendDir()
+	if frontendDir != "" {
+		r.Static("/css", filepath.Join(frontendDir, "css"))
+		r.Static("/js", filepath.Join(frontendDir, "js"))
+
+		// HTML 页面映射
+		r.StaticFile("/", filepath.Join(frontendDir, "index.html"))
+		r.StaticFile("/index.html", filepath.Join(frontendDir, "index.html"))
+		r.StaticFile("/post.html", filepath.Join(frontendDir, "post.html"))
+		r.StaticFile("/login.html", filepath.Join(frontendDir, "login.html"))
+		r.StaticFile("/register.html", filepath.Join(frontendDir, "register.html"))
+		r.StaticFile("/new-post.html", filepath.Join(frontendDir, "new-post.html"))
+	}
+
 	return r
 }
 
+// findFrontendDir 找到前端文件所在的目录
+// 依次尝试：环境变量 FRONTEND_DIR、../frontend（相对 backend/）、./frontend
+func findFrontendDir() string {
+	if d := os.Getenv("FRONTEND_DIR"); d != "" {
+		return d
+	}
+	candidates := []string{"../frontend", "./frontend"}
+	for _, d := range candidates {
+		if info, err := os.Stat(d); err == nil && info.IsDir() {
+			return d
+		}
+	}
+	return ""
+}
+
 // corsMiddleware 返回一个简单的 CORS 中间件。
-// 它允许所有来源的请求（开发阶段够用），并处理 OPTIONS 预检请求。
 func corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		// 浏览器在跨域请求前会先发一个 OPTIONS "预检请求"
-		// 直接返回 204，告诉浏览器"可以继续"
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return

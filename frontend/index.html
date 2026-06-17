@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的博客</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-title">我的博客</a>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">首页</a></li>
+        <li><a href="/login.html">登录</a></li>
+        <li><a href="/register.html">注册</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="post-list-header">
+    <h1>文章</h1>
+  </div>
+
+  <div id="postList"></div>
+
+  <div id="pagination" class="pagination"></div>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 我的博客
+</footer>
+
+<script src="/js/common.js"></script>
+<script>
+/* ============================================================
+   首页 — 文章列表
+   ============================================================ */
+
+let currentPage = 1;
+const pageSize = 10;
+
+async function loadPosts(page) {
+  currentPage = page;
+  const listEl = document.getElementById('postList');
+  const pagEl = document.getElementById('pagination');
+
+  listEl.innerHTML = '<div class="empty-state"><p>加载中…</p></div>';
+
+  try {
+    const data = await api.get(`/posts?page=${page}&page_size=${pageSize}`);
+
+    if (!data.data.posts || data.data.posts.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <p>📝 还没有文章</p>
+          ${isLoggedIn() ? '<a href="/new-post.html" class="btn btn-primary btn-sm">写第一篇文章</a>' : ''}
+        </div>`;
+      pagEl.innerHTML = '';
+      return;
+    }
+
+    listEl.innerHTML = data.data.posts.map(post => `
+      <a href="/post.html?id=${post.id}" class="post-entry">
+        <h2 class="post-entry-title">${escapeHTML(post.title)}</h2>
+        <div class="post-entry-meta">
+          <span>${escapeHTML(post.author_name)}</span>
+          <span>${formatDate(post.created_at)}</span>
+          <span>阅读约 ${post.reading_time} 分钟</span>
+        </div>
+        <p class="post-entry-summary">${escapeHTML(post.summary)}</p>
+        <div class="post-stats">
+          <span>💬 ${post.comments_count}</span>
+          <span>❤ ${post.likes_count}</span>
+        </div>
+      </a>
+    `).join('');
+
+    // 分页
+    const total = data.data.total;
+    const totalPages = Math.ceil(total / pageSize);
+
+    pagEl.innerHTML = `
+      <button ${page <= 1 ? 'disabled' : ''} onclick="loadPosts(${page - 1})">← 上一页</button>
+      <span class="page-info">${page} / ${totalPages || 1}</span>
+      <button ${page >= totalPages ? 'disabled' : ''} onclick="loadPosts(${page + 1})">下一页 →</button>
+    `;
+  } catch (err) {
+    listEl.innerHTML = `<div class="empty-state"><p>加载失败：${escapeHTML(err.message)}</p></div>`;
+  }
+}
+
+// 初始化
+updateHeader();
+loadPosts(1);
+</script>
+
+</body>
+</html>

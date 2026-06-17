@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文章详情</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-title">我的博客</a>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">首页</a></li>
+        <li><a href="/login.html">登录</a></li>
+        <li><a href="/register.html">注册</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="main-content">
+  <div id="postContent"></div>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 我的博客
+</footer>
+
+<script src="/js/common.js"></script>
+<script>
+/* ============================================================
+   文章详情页
+   ============================================================ */
+
+const postID = getPostIDFromURL();
+
+async function loadPost() {
+  const el = document.getElementById('postContent');
+
+  if (!postID) {
+    el.innerHTML = '<div class="empty-state"><p>缺少文章 ID</p><a href="/">← 回到首页</a></div>';
+    return;
+  }
+
+  el.innerHTML = '<div class="empty-state"><p>加载中…</p></div>';
+
+  try {
+    // 并行加载文章详情和评论
+    const [postData, commentsData] = await Promise.all([
+      api.get(`/posts/${postID}`),
+      api.get(`/posts/${postID}/comments`)
+    ]);
+
+    const post = postData.data;
+    document.title = post.title + ' — 我的博客';
+
+    // 配置 Markdown 解析器
+    marked.setOptions({ breaks: true, gfm: true });
+    const renderedHTML = marked.parse(post.content);
+
+    el.innerHTML = `
+      <article>
+        <header class="article-header">
+          <h1 class="article-title">${escapeHTML(post.title)}</h1>
+          <div class="article-meta">
+            <span>
+              <a href="#">${escapeHTML(post.author_name)}</a>
+            </span>
+            <span>${formatDate(post.created_at)}</span>
+            <span>阅读约 ${post.reading_time} 分钟</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          ${renderedHTML}
+        </div>
+
+        <div class="like-section">
+          <button class="btn-like ${post.is_liked ? 'liked' : ''}" id="btnLike" onclick="toggleLike()">
+            <span class="like-icon">${post.is_liked ? '❤' : '🤍'}</span>
+            <span id="likeCount">${post.likes_count}</span>
+          </button>
+        </div>
+      </article>
+
+      <section class="comments-section">
+        <h2>评论 (${post.comments_count})</h2>
+        <div id="commentForm"></div>
+        <div id="commentList"></div>
+      </section>
+    `;
+
+    // 渲染评论表单
+    renderCommentForm();
+    // 渲染评论列表
+    renderComments(commentsData.data || []);
+
+  } catch (err) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <p>${escapeHTML(err.message)}</p>
+        <a href="/">← 回到首页</a>
+      </div>`;
+  }
+}
+
+/* —— 点赞 —— */
+async function toggleLike() {
+  if (!isLoggedIn()) {
+    showToast('请先登录', 'error');
+    goToLogin();
+    return;
+  }
+
+  try {
+    const data = await api.post(`/posts/${postID}/like`);
+    const btn = document.getElementById('btnLike');
+    const icon = btn.querySelector('.like-icon');
+    const count = document.getElementById('likeCount');
+
+    if (data.data.liked) {
+      btn.classList.add('liked');
+      icon.textContent = '❤';
+    } else {
+      btn.classList.remove('liked');
+      icon.textContent = '🤍';
+    }
+    count.textContent = data.data.likes_count;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+/* —— 评论表单 —— */
+function renderCommentForm() {
+  const el = document.getElementById('commentForm');
+  if (!el) return;
+
+  if (!isLoggedIn()) {
+    el.innerHTML = `<p class="comment-login-hint">
+      <a href="javascript:goToLogin()">登录</a> 后可以发表评论
+    </p>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="comment-form">
+      <textarea id="commentInput" placeholder="写下你的想法…" rows="3"></textarea>
+      <div class="form-actions">
+        <button class="btn btn-primary btn-sm" onclick="submitComment(null)">发表评论</button>
+      </div>
+    </div>
+  `;
+}
+
+async function submitComment(parentID) {
+  const textarea = document.getElementById('commentInput');
+  if (!textarea) {
+    // 内联回复框
+    const replyBox = document.getElementById('replyBox');
+    if (replyBox) {
+      const content = replyBox.value.trim();
+      if (!content) return;
+      try {
+        await api.post(`/posts/${postID}/comments`, { content, parent_id: parentID });
+        showToast('回复成功');
+        loadPost(); // 刷新
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+    return;
+  }
+
+  const content = textarea.value.trim();
+  if (!content) { showToast('请输入评论内容', 'error'); return; }
+
+  try {
+    await api.post(`/posts/${postID}/comments`, { content, parent_id: parentID });
+    showToast('评论发表成功');
+    loadPost(); // 刷新
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+/* —— 评论列表（树形结构） —— */
+function renderComments(comments) {
+  const el = document.getElementById('commentList');
+  if (!el) return;
+
+  if (!comments || comments.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:var(--gap-lg);">还没有评论，来写第一条吧</p>';
+    return;
+  }
+
+  el.innerHTML = renderCommentTree(comments);
+}
+
+function renderCommentTree(comments, isReply) {
+  return comments.map(c => `
+    <div class="comment-item ${isReply ? 'is-reply' : ''}">
+      <div class="comment-meta">
+        <span class="comment-author">${escapeHTML(c.username)}</span>
+        <span class="comment-time">${formatDate(c.created_at)}</span>
+      </div>
+      <div class="comment-content">${escapeHTML(c.content)}</div>
+      <div class="comment-actions">
+        ${isLoggedIn() ? `<button class="comment-like-btn ${c.is_liked ? 'liked' : ''}" onclick="toggleCommentLike(${c.id}, this)">
+          <span class="like-icon">${c.is_liked ? '❤' : '🤍'}</span>
+          <span class="like-count">${c.likes_count || 0}</span>
+        </button>` : `<span class="comment-like-btn" style="cursor:default;">
+          <span class="like-icon">🤍</span>
+          <span class="like-count">${c.likes_count || 0}</span>
+        </span>`}
+        ${isLoggedIn() ? `<button class="comment-reply-btn" onclick="showReplyBox(${c.id}, this)">
+          回复
+        </button>` : ''}
+      </div>
+      <div class="reply-form" id="reply-${c.id}" style="display:none;margin-top:var(--gap-sm);"></div>
+      ${c.replies && c.replies.length > 0 ? renderCommentTree(c.replies, true) : ''}
+    </div>
+  `).join('');
+}
+
+async function toggleCommentLike(commentID, btn) {
+  if (!isLoggedIn()) {
+    showToast('请先登录', 'error');
+    goToLogin();
+    return;
+  }
+
+  try {
+    const data = await api.post(`/posts/${postID}/comments/${commentID}/like`);
+    const icon = btn.querySelector('.like-icon');
+    const count = btn.querySelector('.like-count');
+
+    if (data.data.liked) {
+      btn.classList.add('liked');
+      icon.textContent = '❤';
+    } else {
+      btn.classList.remove('liked');
+      icon.textContent = '🤍';
+    }
+    count.textContent = data.data.likes_count;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+let activeReplyID = null;
+
+function showReplyBox(commentID, btn) {
+  // 收起之前打开的回复框
+  if (activeReplyID && activeReplyID !== commentID) {
+    const oldBox = document.getElementById('reply-' + activeReplyID);
+    if (oldBox) oldBox.style.display = 'none';
+  }
+  activeReplyID = commentID;
+
+  const box = document.getElementById('reply-' + commentID);
+  if (box.style.display === 'none' || !box.style.display) {
+    box.style.display = 'block';
+    box.innerHTML = `
+      <textarea id="replyBox" placeholder="回复…" rows="2"
+        style="width:100%;padding:var(--gap-sm);border:1px solid var(--border);border-radius:var(--radius-sm);
+        font-family:var(--font-sans);font-size:var(--font-size-sm);resize:vertical;"></textarea>
+      <div style="display:flex;gap:var(--gap-xs);margin-top:6px;">
+        <button class="btn btn-primary btn-sm" onclick="submitReply(${commentID})">回复</button>
+        <button class="btn btn-secondary btn-sm" onclick="cancelReply(${commentID})">取消</button>
+      </div>
+    `;
+  } else {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+}
+
+async function submitReply(parentID) {
+  const textarea = document.getElementById('replyBox');
+  if (!textarea) return;
+  const content = textarea.value.trim();
+  if (!content) { showToast('请输入回复内容', 'error'); return; }
+  try {
+    await api.post(`/posts/${postID}/comments`, { content, parent_id: parentID });
+    showToast('回复成功');
+    loadPost();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function cancelReply(commentID) {
+  const box = document.getElementById('reply-' + commentID);
+  box.style.display = 'none';
+  box.innerHTML = '';
+  activeReplyID = null;
+}
+
+// 初始化
+updateHeader();
+loadPost();
+</script>
+
+</body>
+</html>

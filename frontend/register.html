@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注册 — 我的博客</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-title">我的博客</a>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">首页</a></li>
+        <li><a href="/login.html">登录</a></li>
+        <li><a href="/register.html" class="active">注册</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="auth-page">
+  <div class="auth-card">
+    <h1>注册</h1>
+
+    <form id="registerForm" onsubmit="handleRegister(event)">
+      <div class="form-group" id="usernameGroup">
+        <label for="username">用户名</label>
+        <input type="text" id="username" placeholder="2~50 个字符" autocomplete="username" required>
+        <span class="error-msg" id="usernameError"></span>
+      </div>
+
+      <div class="form-group" id="emailGroup">
+        <label for="email">邮箱</label>
+        <input type="email" id="email" placeholder="请输入邮箱" autocomplete="email" required>
+        <span class="error-msg" id="emailError"></span>
+      </div>
+
+      <div class="form-group" id="passwordGroup">
+        <label for="password">密码</label>
+        <input type="password" id="password" placeholder="至少 6 位" autocomplete="new-password" required>
+        <span class="error-msg" id="passwordError"></span>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">注册</button>
+    </form>
+
+    <p class="auth-switch">
+      已有账号？<a href="/login.html">去登录 →</a>
+    </p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 我的博客
+</footer>
+
+<script src="/js/common.js"></script>
+<script>
+/* ============================================================
+   注册页
+   ============================================================ */
+
+// 已登录的用户直接跳转
+if (isLoggedIn()) {
+  window.location.href = getRedirectURL();
+}
+
+function showFieldError(field, msg) {
+  const group = document.getElementById(field + 'Group');
+  const error = document.getElementById(field + 'Error');
+  if (msg) {
+    group.classList.add('has-error');
+    error.textContent = msg;
+  } else {
+    group.classList.remove('has-error');
+    error.textContent = '';
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+
+  const username = document.getElementById('username').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  // 清空错误
+  ['username', 'email', 'password'].forEach(f => showFieldError(f, ''));
+
+  // 前端校验
+  let valid = true;
+  if (!username || username.length < 2 || username.length > 50) {
+    showFieldError('username', '用户名需要 2~50 个字符');
+    valid = false;
+  }
+  if (!email) {
+    showFieldError('email', '请输入邮箱');
+    valid = false;
+  }
+  if (!password || password.length < 6) {
+    showFieldError('password', '密码至少 6 位');valid = false;
+  }
+  if (!valid) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '注册中…';
+  btn.disabled = true;
+
+  try {
+    const data = await api.post('/auth/register', { username, email, password });
+    showToast('注册成功！即将跳转到登录页…');
+    // 保留 redirect 参数，登录后可以回到之前的页面
+    const redirectParam = getQueryParam('redirect');
+    const loginURL = redirectParam
+      ? '/login.html?redirect=' + encodeURIComponent(redirectParam)
+      : '/login.html';
+    setTimeout(() => { window.location.href = loginURL; }, 1000);
+  } catch (err) {
+    btn.textContent = '注册';
+    btn.disabled = false;
+    showToast(err.message, 'error');
+  }
+}
+</script>
+
+</body>
+</html>

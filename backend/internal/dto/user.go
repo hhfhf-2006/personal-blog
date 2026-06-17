@@ -8,6 +8,11 @@ type RegisterRequest struct {
 	Password string `json:"password" binding:"required,min=6,max=100"`
 }
 
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
 type UserResponse struct {
 	ID        int64     `json:"id"`
 	Username  string    `json:"username"`
@@ -18,4 +23,9 @@ type UserResponse struct {
 
 type RegisterResponse struct {
 	User UserResponse `json:"user"`
+}
+
+type LoginResponse struct {
+	Token string       `json:"token"`
+	User  UserResponse `json:"user"`
 }

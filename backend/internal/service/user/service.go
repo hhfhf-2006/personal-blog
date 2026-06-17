@@ -7,18 +7,21 @@ import (
 	"personal-blog-backend/internal/dao/model"
 	"personal-blog-backend/internal/dto"
 	"personal-blog-backend/internal/pkg/apperror"
+	"personal-blog-backend/internal/pkg/auth"
 	"personal-blog-backend/internal/pkg/password"
 
 	"gorm.io/gorm"
 )
 
 type Service struct {
-	userDAO *dao.UserDAO
+	userDAO   *dao.UserDAO
+	jwtSecret string
 }
 
-func NewService(userDAO *dao.UserDAO) *Service {
+func NewService(userDAO *dao.UserDAO, jwtSecret string) *Service {
 	return &Service{
-		userDAO: userDAO,
+		userDAO:   userDAO,
+		jwtSecret: jwtSecret,
 	}
 }
 
@@ -68,6 +71,37 @@ func (s *Service) Register(req dto.RegisterRequest) (*dto.RegisterResponse, erro
 			Email:     newUser.Email,
 			IsAdmin:   newUser.IsAdmin,
 			CreatedAt: newUser.CreatedAt,
+		},
+	}, nil
+}
+
+// Login 验证邮箱和密码，成功则返回 JWT 令牌和用户信息
+func (s *Service) Login(req dto.LoginRequest) (*dto.LoginResponse, error) {
+	user, err := s.userDAO.FindByEmail(req.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.BadRequest("邮箱或密码错误")
+		}
+		return nil, apperror.WrapInternal(err)
+	}
+
+	if !password.Check(req.Password, user.PasswordHash) {
+		return nil, apperror.BadRequest("邮箱或密码错误")
+	}
+
+	token, err := auth.GenerateToken(s.jwtSecret, user.ID, user.Username, user.IsAdmin)
+	if err != nil {
+		return nil, apperror.WrapInternal(err)
+	}
+
+	return &dto.LoginResponse{
+		Token: token,
+		User: dto.UserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			IsAdmin:   user.IsAdmin,
+			CreatedAt: user.CreatedAt,
 		},
 	}, nil
 }

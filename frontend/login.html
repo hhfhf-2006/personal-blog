@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 — 我的博客</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-title">我的博客</a>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">首页</a></li>
+        <li><a href="/login.html" class="active">登录</a></li>
+        <li><a href="/register.html">注册</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="auth-page">
+  <div class="auth-card">
+    <h1>登录</h1>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group" id="emailGroup">
+        <label for="email">邮箱</label>
+        <input type="email" id="email" placeholder="请输入邮箱" autocomplete="email" required>
+        <span class="error-msg" id="emailError"></span>
+      </div>
+
+      <div class="form-group" id="passwordGroup">
+        <label for="password">密码</label>
+        <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password" required>
+        <span class="error-msg" id="passwordError"></span>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">登录</button>
+    </form>
+
+    <p class="auth-switch">
+      还没有账号？<a href="/register.html">去注册 →</a>
+    </p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 我的博客
+</footer>
+
+<script src="/js/common.js"></script>
+<script>
+/* ============================================================
+   登录页
+   ============================================================ */
+
+// 已登录的用户直接跳转到目标页（或首页）
+if (isLoggedIn()) {
+  window.location.href = getRedirectURL();
+}
+
+function showFieldError(field, msg) {
+  const group = document.getElementById(field + 'Group');
+  const error = document.getElementById(field + 'Error');
+  if (msg) {
+    group.classList.add('has-error');
+    error.textContent = msg;
+  } else {
+    group.classList.remove('has-error');
+    error.textContent = '';
+  }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  // 清空之前的错误
+  showFieldError('email', '');
+  showFieldError('password', '');
+
+  // 前端校验
+  let valid = true;
+  if (!email) {
+    showFieldError('email', '请输入邮箱');
+    valid = false;
+  }
+  if (!password) {
+    showFieldError('password', '请输入密码');
+    valid = false;
+  }
+  if (!valid) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '登录中…';
+  btn.disabled = true;
+
+  try {
+    const data = await api.post('/auth/login', { email, password });
+    saveAuth(data.data.token, data.data.user);
+    showToast('登录成功！');
+    // 跳转到登录前的页面（或首页）
+    setTimeout(() => { window.location.href = getRedirectURL(); }, 500);
+  } catch (err) {
+    btn.textContent = '登录';
+    btn.disabled = false;
+    showToast(err.message, 'error');
+  }
+}
+</script>
+
+</body>
+</html>
