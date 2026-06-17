@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:16
@@ -11,6 +13,22 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations/000001_init_schema.sql:/docker-entrypoint-initdb.d/000001_init_schema.sql
+    restart: unless-stopped
+  backend:
+    build: . 
+    
+    container_name: personal-blog
+    ports:
+      - "8080:8080" 
+    depends_on:
+      - postgres   
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=blog
+      - DB_PASSWORD=blog123456
+      - DB_NAME=blog_db
+    restart: unless-stopped
 
 volumes:
   postgres_data:
