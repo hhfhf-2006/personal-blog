@@ -6,13 +6,15 @@ services:
     container_name: my-blog-postgres
     environment:
       POSTGRES_USER: blog
-      POSTGRES_PASSWORD: blog123456
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: blog_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations/000001_init_schema.sql:/docker-entrypoint-initdb.d/000001_init_schema.sql
+      - ./migrations/000002_add_github_oauth.sql:/docker-entrypoint-initdb.d/000002_add_github_oauth.sql
+      - ./migrations/000003_add_game_scores.sql:/docker-entrypoint-initdb.d/000003_add_game_scores.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U blog -d blog_db"]
       interval: 3s
@@ -35,11 +37,20 @@ services:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=blog
-      - DB_PASSWORD=blog123456
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=blog_db
+      - DB_SSLMODE=disable
       - SERVER_PORT=8080
-      - JWT_SECRET=048103dfc467142960c3327ca4bdc8ce5a96f252193cc352ffd7a3908de12891
+      - JWT_SECRET=${JWT_SECRET}
       - FRONTEND_DIR=./frontend
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-183976823@qq.com}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-灰化肥发灰}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
     restart: unless-stopped
 
 volumes:

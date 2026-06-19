@@ -2,18 +2,36 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data: https://cdnjs.cloudflare.com;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>我的博客</title>
+  <title>灰化肥发灰的小站</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/js/katex/katex.min.css">
 </head>
 <body>
 
 <header class="site-header">
   <div class="header-inner">
-    <a href="/" class="site-title">我的博客</a>
+    <a href="/" class="site-title">灰化肥发灰的小站</a>
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索文章…" autocomplete="off">
+      <button type="submit" class="search-btn" aria-label="搜索" title="搜索">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
     <nav>
       <ul class="nav-links" id="navLinks">
         <li><a href="/">首页</a></li>
+        <li class="nav-dropdown" id="gameDropdown">
+          <button class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+            游戏中心
+            <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 1 5 5 9 1"/></svg>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="/2048.html">2048</a></li>
+            <li><a href="/leaderboard.html">排行榜</a></li>
+          </ul>
+        </li>
         <li><a href="/login.html">登录</a></li>
         <li><a href="/register.html">注册</a></li>
       </ul>
@@ -32,10 +50,13 @@
 </main>
 
 <footer class="site-footer">
-  &copy; 2026 我的博客
+  &copy; 2026 灰化肥发灰的小站
 </footer>
 
+<script src="/js/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.5/purify.min.js" integrity="sha384-qSFej5dZNviyoPgYJ5+Xk4bEbX8AYddxAHPuzs1aSgRiXxJ3qmyWNaPsRkpv/+x5" crossorigin="anonymous"></script>
 <script src="/js/common.js"></script>
+<script src="/js/katex/katex.min.js"></script>
 <script>
 /* ============================================================
    首页 — 文章列表
@@ -43,42 +64,78 @@
 
 let currentPage = 1;
 const pageSize = 10;
+const searchQuery = getQueryParam('q'); // 从 URL 读取搜索关键词
 
 async function loadPosts(page) {
   currentPage = page;
   const listEl = document.getElementById('postList');
   const pagEl = document.getElementById('pagination');
+  const headerEl = document.querySelector('.post-list-header h1');
 
   listEl.innerHTML = '<div class="empty-state"><p>加载中…</p></div>';
 
   try {
-    const data = await api.get(`/posts?page=${page}&page_size=${pageSize}`);
+    // 搜索模式 vs 列表模式
+    let apiPath;
+    if (searchQuery) {
+      apiPath = `/posts/search?q=${encodeURIComponent(searchQuery)}&page=${page}&page_size=${pageSize}`;
+      headerEl.textContent = `搜索结果：${searchQuery}`;
+    } else {
+      apiPath = `/posts?page=${page}&page_size=${pageSize}`;
+      headerEl.textContent = '文章';
+    }
+
+    const data = await api.get(apiPath);
 
     if (!data.data.posts || data.data.posts.length === 0) {
-      listEl.innerHTML = `
-        <div class="empty-state">
-          <p>📝 还没有文章</p>
-          ${isLoggedIn() ? '<a href="/new-post.html" class="btn btn-primary btn-sm">写第一篇文章</a>' : ''}
+      if (searchQuery) {
+        listEl.innerHTML = `<div class="empty-state">
+          <p>🔍 未找到包含「${escapeHTML(searchQuery)}」的文章</p>
         </div>`;
+      } else {
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <p>📝 还没有文章</p>
+            ${isAdmin() ? '<a href="/new-post.html" class="btn btn-primary btn-sm">写第一篇文章</a>' : ''}
+          </div>`;
+      }
       pagEl.innerHTML = '';
       return;
     }
 
-    listEl.innerHTML = data.data.posts.map(post => `
-      <a href="/post.html?id=${post.id}" class="post-entry">
-        <h2 class="post-entry-title">${escapeHTML(post.title)}</h2>
-        <div class="post-entry-meta">
-          <span>${escapeHTML(post.author_name)}</span>
-          <span>${formatDate(post.created_at)}</span>
-          <span>阅读约 ${post.reading_time} 分钟</span>
+    const isAdminUser = isAdmin();
+
+    listEl.innerHTML = data.data.posts.map(post => {
+      const actionBtns = isAdminUser ? `
+        <div class="post-entry-actions">
+          <button class="btn-glass btn-glass-edit btn-glass-sm" onclick="event.preventDefault(); editPost(${post.id})" title="编辑">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-glass btn-glass-delete btn-glass-sm" data-post-id="${post.id}" data-post-title="${escapeHTML(post.title).replace(/"/g, '&quot;')}" onclick="deletePost(this)" title="删除">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>` : '';
+
+      return `
+      <div class="post-entry-wrapper">
+        <div class="post-entry" onclick="window.location.href='/post.html?id=${post.id}'" style="cursor:pointer;">
+          <h2 class="post-entry-title">${escapeHTML(post.title)}</h2>
+          <div class="post-entry-meta">
+            <span>阅读约 ${post.reading_time} 分钟</span>
+          </div>
+          <div class="post-entry-dates">
+            <span>创建于 ${formatDate(post.created_at)}</span>
+            ${post.is_edited ? `<span>最后编辑于 ${formatDate(post.updated_at)}</span>` : ''}
+          </div>
+          <div class="post-entry-summary">${renderMarkdown(post.summary)}</div>
+          <div class="post-stats">
+            <span>💬 ${post.comments_count}</span>
+            <span>❤ ${post.likes_count}</span>
+          </div>
         </div>
-        <p class="post-entry-summary">${escapeHTML(post.summary)}</p>
-        <div class="post-stats">
-          <span>💬 ${post.comments_count}</span>
-          <span>❤ ${post.likes_count}</span>
-        </div>
-      </a>
-    `).join('');
+        ${actionBtns}
+      </div>
+    `}).join('');
 
     // 分页
     const total = data.data.total;
@@ -94,8 +151,33 @@ async function loadPosts(page) {
   }
 }
 
+/* —— 文章编辑 / 删除（仅作者可见） —— */
+
+function editPost(id) {
+  window.location.href = `/new-post.html?edit=${id}`;
+}
+
+async function deletePost(btn) {
+  const id = parseInt(btn.getAttribute('data-post-id'));
+  const title = btn.getAttribute('data-post-title');
+  if (!confirm(`确定要删除「${title}」吗？该文章下的所有评论也会被删除，此操作不可撤销。`)) return;
+
+  try {
+    await api.delete(`/posts/${id}`);
+    showToast('文章已删除');
+    loadPosts(currentPage);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
 // 初始化
 updateHeader();
+// 预填搜索框（如果 URL 携带 q 参数）
+if (searchQuery) {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.value = searchQuery;
+}
 loadPosts(1);
 </script>
 

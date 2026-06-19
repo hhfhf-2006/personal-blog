@@ -2,18 +2,35 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data: https://cdnjs.cloudflare.com;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>登录 — 我的博客</title>
+  <title>登录 — 灰化肥发灰的小站</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header class="site-header">
   <div class="header-inner">
-    <a href="/" class="site-title">我的博客</a>
+    <a href="/" class="site-title">灰化肥发灰的小站</a>
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索文章…" autocomplete="off">
+      <button type="submit" class="search-btn" aria-label="搜索" title="搜索">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
     <nav>
       <ul class="nav-links" id="navLinks">
         <li><a href="/">首页</a></li>
+        <li class="nav-dropdown" id="gameDropdown">
+          <button class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+            游戏中心
+            <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 1 5 5 9 1"/></svg>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="/2048.html">2048</a></li>
+            <li><a href="/leaderboard.html">排行榜</a></li>
+          </ul>
+        </li>
         <li><a href="/login.html" class="active">登录</a></li>
         <li><a href="/register.html">注册</a></li>
       </ul>
@@ -41,6 +58,15 @@
       <button type="submit" class="btn btn-primary" id="submitBtn">登录</button>
     </form>
 
+    <div class="oauth-divider">
+      <button class="btn btn-github" onclick="handleGitHubLogin()">
+        <svg class="github-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        GitHub 登录
+      </button>
+    </div>
+
     <p class="auth-switch">
       还没有账号？<a href="/register.html">去注册 →</a>
     </p>
@@ -48,7 +74,7 @@
 </main>
 
 <footer class="site-footer">
-  &copy; 2026 我的博客
+  &copy; 2026 灰化肥发灰的小站
 </footer>
 
 <script src="/js/common.js"></script>
@@ -57,9 +83,63 @@
    登录页
    ============================================================ */
 
+updateHeader();
+
+// —— GitHub OAuth 回调处理 ——
+// Token 通过 URL Fragment (#) 传递，不会被发送到服务器，避免泄露到日志/Referer
+(function handleOAuthCallback() {
+  const hash = window.location.hash;
+  if (!hash || hash === '#') return;
+
+  // Hash 格式: #token=xxx&user=yyy 或 #error=xxx
+  const params = new URLSearchParams(hash.slice(1)); // 去掉开头的 #
+
+  // 成功回调：GitHub 登录后携带 token 和 user 参数返回
+  const token = params.get('token');
+  const user = params.get('user');
+  if (token && user) {
+    try {
+      const userObj = JSON.parse(user);
+      saveAuth(token, userObj);
+      // 优先使用 hash 中的 redirect（OAuth 回调携带），
+      // 其次用 query string 中的 redirect（常规登录流程），
+      // 默认为首页
+      const redirectFromHash = params.get('redirect');
+      const redirectTo = redirectFromHash || getRedirectURL();
+      window.location.href = redirectTo;
+      return;
+    } catch (e) {
+      // JSON 解析失败，清除 hash 让用户手动登录
+      window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    }
+  }
+
+  // 错误回调：GitHub 登录失败（error 仍通过 query 参数传递）
+})();
+
+(function handleOAuthError() {
+  const params = new URLSearchParams(window.location.search);
+  const error = params.get('error');
+  if (error) {
+    // 清除 URL 中的 error 参数
+    const cleanURL = window.location.pathname + (params.get('redirect') ? '?redirect=' + encodeURIComponent(params.get('redirect')) : '');
+    window.history.replaceState({}, '', cleanURL);
+    setTimeout(() => showToast(error, 'error'), 300);
+  }
+})();
+
 // 已登录的用户直接跳转到目标页（或首页）
 if (isLoggedIn()) {
   window.location.href = getRedirectURL();
+}
+
+// GitHub 登录：跳转到后端授权接口，携带 redirect 参数以便登录后回到原页面
+function handleGitHubLogin() {
+  const redirect = getQueryParam('redirect');
+  const url = redirect
+    ? '/api/v1/auth/github?redirect=' + encodeURIComponent(redirect)
+    : '/api/v1/auth/github';
+  window.location.href = url;
 }
 
 function showFieldError(field, msg) {

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>KaTeX 诊断测试</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/js/katex/katex.min.css">
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; }
+    .test-section { margin: 1.5rem 0; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; }
+    .test-section h3 { margin-top: 0; }
+    .pass { color: green; }
+    .fail { color: red; }
+    pre { background: #f0f0f0; padding: 0.5rem; overflow-x: auto; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<h1>KaTeX 诊断测试</h1>
+
+<div class="test-section">
+  <h3>1. KaTeX 库加载状态</h3>
+  <p id="test1">检测中…</p>
+</div>
+
+<div class="test-section">
+  <h3>2. renderToString (display mode)</h3>
+  <p>公式: <code>E = mc^2</code></p>
+  <p>渲染结果:</p>
+  <div id="test2-display"></div>
+  <pre id="test2-html"></pre>
+</div>
+
+<div class="test-section">
+  <h3>3. renderToString (inline mode)</h3>
+  <p>公式: <code>\alpha + \beta = \gamma</code></p>
+  <p>渲染结果:</p>
+  <div id="test3-display"></div>
+  <pre id="test3-html"></pre>
+</div>
+
+<div class="test-section">
+  <h3>4. 复杂公式 (display mode)</h3>
+  <p>公式: <code>\sum_{i=1}^{n} x_i = \frac{n(n+1)}{2}</code></p>
+  <p>渲染结果:</p>
+  <div id="test4-display"></div>
+  <pre id="test4-html"></pre>
+</div>
+
+<div class="test-section">
+  <h3>5. 字体加载检测</h3>
+  <p id="test5">检测中…</p>
+</div>
+
+<div class="test-section">
+  <h3>6. 完整管道模拟 (renderMarkdown 风格)</h3>
+  <p>输入: <code>行内 $\alpha+\beta$ 和跨行 $$\sum_{i=1}^n x_i$$ 公式</code></p>
+  <p>渲染结果:</p>
+  <div id="test6-display"></div>
+  <pre id="test6-html"></pre>
+</div>
+
+<script src="/js/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.5/purify.min.js" integrity="sha384-qSFej5dZNviyoPgYJ5+Xk4bEbX8AYddxAHPuzs1aSgRiXxJ3qmyWNaPsRkpv/+x5" crossorigin="anonymous"></script>
+<script src="/js/common.js"></script>
+<script src="/js/katex/katex.min.js"></script>
+
+<script>
+(function() {
+  // Test 1: Library loaded
+  var t1 = document.getElementById('test1');
+  if (typeof katex !== 'undefined') {
+    t1.innerHTML = '<span class="pass">✅ katex 已加载 (version: ' + katex.version + ')</span>';
+  } else {
+    t1.innerHTML = '<span class="fail">❌ katex 未加载! typeof katex === "undefined"</span>';
+  }
+
+  // Test 2: Display mode
+  try {
+    var r2 = katex.renderToString('E = mc^2', {displayMode: true, throwOnError: false});
+    document.getElementById('test2-display').innerHTML = r2;
+    document.getElementById('test2-html').textContent = r2.substring(0, 500);
+  } catch(e) {
+    document.getElementById('test2-display').innerHTML = '<span class="fail">❌ Error: ' + e.message + '</span>';
+  }
+
+  // Test 3: Inline mode with backslash
+  try {
+    var r3 = katex.renderToString('\\alpha + \\beta = \\gamma', {displayMode: false, throwOnError: false});
+    document.getElementById('test3-display').innerHTML = r3;
+    document.getElementById('test3-html').textContent = r3.substring(0, 500);
+  } catch(e) {
+    document.getElementById('test3-display').innerHTML = '<span class="fail">❌ Error: ' + e.message + '</span>';
+  }
+
+  // Test 4: Complex display formula
+  try {
+    var r4 = katex.renderToString('\\sum_{i=1}^{n} x_i = \\frac{n(n+1)}{2}', {displayMode: true, throwOnError: false});
+    document.getElementById('test4-display').innerHTML = r4;
+    document.getElementById('test4-html').textContent = r4.substring(0, 500);
+  } catch(e) {
+    document.getElementById('test4-display').innerHTML = '<span class="fail">❌ Error: ' + e.message + '</span>';
+  }
+
+  // Test 5: Font loading
+  var t5 = document.getElementById('test5');
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function() {
+      var kaTeXFonts = [];
+      document.fonts.forEach(function(f) {
+        if (f.family.indexOf('KaTeX') !== -1) {
+          kaTeXFonts.push(f.family + ':' + f.status);
+        }
+      });
+      if (kaTeXFonts.length > 0) {
+        t5.innerHTML = '<span class="pass">✅ 已加载 ' + kaTeXFonts.length + ' 个 KaTeX 字体</span><br>' +
+          kaTeXFonts.map(function(f) { return '<code>' + f + '</code>'; }).join('<br>');
+      } else {
+        t5.innerHTML = '<span class="fail">❌ 未找到已加载的 KaTeX 字体 (可能尚未触发字体请求)</span>';
+      }
+    });
+  } else {
+    t5.innerHTML = '<span>⚠ document.fonts API 不可用</span>';
+  }
+
+  // Test 6: Full pipeline
+  if (typeof renderMarkdown === 'function') {
+    var input = '行内 $\\alpha+\\beta$ 和跨行 $$\\sum_{i=1}^n x_i$$ 公式';
+    var result = renderMarkdown(input);
+    document.getElementById('test6-display').innerHTML = result;
+    document.getElementById('test6-html').textContent = result.substring(0, 1000);
+  } else {
+    document.getElementById('test6-display').innerHTML = '<span class="fail">❌ renderMarkdown 函数不可用</span>';
+  }
+
+  // Log to console
+  console.log('KaTeX diagnostic complete. Check the test sections above.');
+  console.log('KaTeX version:', typeof katex !== 'undefined' ? katex.version : 'NOT LOADED');
+  console.log('renderMarkdown available:', typeof renderMarkdown !== 'undefined');
+})();
+</script>
+
+</body>
+</html>

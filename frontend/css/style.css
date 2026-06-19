@@ -1,47 +1,49 @@
 /* ============================================================
-   个人博客 — 莫兰迪色系 × PaperMod 极简风格
-   设计参考：github.com/adityatelange/hugo-PaperMod
-   配色：低饱和度莫兰迪（Morandi）调色板
+   个人博客 — Nord 北欧极简配色
+   Nord 调色板：github.com/arcticicestudio/nord
+   浅色系 Snow Storm 为主色调，深色 Polar Night 为辅助
    ============================================================ */
 
-/* —— CSS 变量：莫兰迪调色板 —— */
+/* —— CSS 变量：Nord 调色板 —— */
 :root {
-  /* 背景层次 */
-  --bg-page:        #f8f6f3;     /* 页面底色：暖奶油 */
-  --bg-card:        #ffffff;     /* 卡片背景：纯白 */
-  --bg-card-alt:    #faf9f7;     /* 卡片变体：微暖白 */
-  --bg-highlight:   #f3f1ed;     /* 高亮/悬停背景 */
+  /* 背景层次 — Snow Storm 系列（浅色） */
+  --bg-page:        #ECEFF4;     /* nord6：冰霜白，页面底色 */
+  --bg-card:        #FFFFFF;     /* 纯白卡片 */
+  --bg-card-alt:    #F5F7FA;     /* 冰蓝微白 */
+  --bg-highlight:   #E5E9F0;     /* nord5：浅冰灰 */
 
-  /* 文字层次 */
-  --text-primary:   #3b3836;     /* 主文字：暖深灰 */
-  --text-secondary: #7d7872;     /* 次要文字：暖灰 */
-  --text-muted:     #a8a39d;     /* 弱化文字：浅暖灰 */
+  /* 文字层次 — Polar Night 系列（深色） */
+  --text-primary:   #2E3440;     /* nord0：极夜黑 */
+  --text-secondary: #4C566A;     /* nord3：暗灰 */
+  --text-muted:     #81A1C1;     /* nord9：雾蓝，弱化文字 */
 
   /* 边框 */
-  --border:         #e8e4df;     /* 分割线/边框 */
-  --border-light:   #f0ede8;     /* 浅边框 */
+  --border:         #D8DEE9;     /* nord4：冰蓝灰边框 */
+  --border-light:   #E5E9F0;     /* nord5：浅冰灰 */
 
-  /* 强调色系 */
-  --accent:         #988ea1;     /* 主强调：柔紫灰 */
-  --accent-hover:   #7d7287;     /* 悬停状态 */
-  --accent-light:   #ece8f0;     /* 浅紫背景 */
+  /* 强调色系 — Frost 系列（蓝灰） */
+  --accent:         #5E81AC;     /* nord10：深冰蓝 */
+  --accent-hover:   #81A1C1;     /* nord9：浅冰蓝 */
+  --accent-light:   #ECEFF4;     /* nord6 背景：浅冰白 */
 
-  /* 功能色 */
-  --sage:           #8ba89e;     /* 鼠尾草绿：成功/正反馈 */
-  --sage-light:     #e8f0ed;     /* 浅绿背景 */
-  --rose:           #c49b95;     /* 灰玫瑰：错误/危险/点赞激活 */
-  --rose-light:     #f5eae8;     /* 浅玫瑰背景 */
-  --warm-tan:       #bfb0a0;     /* 暖棕褐：标签/徽章 */
-  --warm-tan-light: #f2ede8;     /* 浅棕背景 */
-  --blue-gray:      #8b95a5;     /* 蓝灰：链接 */
-  --link:           #7d8a9e;     /* 链接色 */
-  --link-hover:     #5d6a7e;     /* 链接悬停 */
+  /* 功能色 — Aurora 系列 */
+  --sage:           #A3BE8C;     /* nord14：极光绿，成功 */
+  --sage-light:     #EDF3E8;     /* 浅极光绿 */
+  --rose:           #BF616A;     /* nord11：极光红，危险/点赞 */
+  --rose-light:     #F5EAEB;     /* 浅极光红 */
+  --warm-tan:       #B48EAD;     /* nord15：极光紫，徽章 */
+  --warm-tan-light: #F3EEF5;     /* 浅极光紫 */
+  --gold:           #EBCB8B;     /* nord13：极光黄，高亮 */
+  --gold-light:     #FBF3E1;     /* 浅极光黄 */
+  --blue-gray:      #5E81AC;     /* nord10：蓝灰按钮 */
+  --link:           #5E81AC;     /* nord10：链接色 */
+  --link-hover:     #2E3440;     /* nord0：链接悬停 */
 
-  /* 阴影 */
-  --shadow-sm:      0 1px 2px rgba(59, 56, 54, 0.04);
-  --shadow-md:      0 1px 3px rgba(59, 56, 54, 0.06),
-                    0 1px 2px rgba(59, 56, 54, 0.04);
-  --shadow-lg:      0 4px 16px rgba(59, 56, 54, 0.08);
+  /* 阴影 — 冷蓝灰调 */
+  --shadow-sm:      0 1px 2px rgba(46, 52, 64, 0.04);
+  --shadow-md:      0 1px 3px rgba(46, 52, 64, 0.06),
+                    0 1px 2px rgba(46, 52, 64, 0.04);
+  --shadow-lg:      0 4px 16px rgba(46, 52, 64, 0.08);
 
   /* 排版 */
   --font-sans:      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -110,7 +112,7 @@ img {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(248, 246, 243, 0.85);
+  background: rgba(59, 66, 82, 0.92);  /* nord1 半透明深色导航 */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -129,11 +131,13 @@ img {
 .site-title {
   font-size: var(--font-size-lg);
   font-weight: 600;
-  color: var(--text-primary);
+  color: #ECEFF4;               /* nord6 浅色文字，适配深色导航 */
   letter-spacing: -0.02em;
+  flex-shrink: 0;               /* 防止被搜索栏挤压 */
+  white-space: nowrap;
 }
 .site-title:hover {
-  color: var(--accent);
+  color: #88C0D0;               /* nord8 冰蓝悬停 */
 }
 
 .nav-links {
@@ -141,22 +145,171 @@ img {
   align-items: center;
   gap: var(--gap-lg);
   list-style: none;
+  flex-shrink: 0;               /* 防止被搜索栏挤压 */
+  white-space: nowrap;          /* 导航文字不换行 */
 }
 .nav-links a {
   font-size: var(--font-size-sm);
-  color: var(--text-secondary);
+  color: #D8DEE9;               /* nord4 浅色，适配深色导航 */
   font-weight: 450;
   transition: color var(--transition);
 }
 .nav-links a:hover,
 .nav-links a.active {
-  color: var(--accent);
+  color: #88C0D0;               /* nord8 冰蓝高亮 */
+}
+
+/* —— 下拉菜单（游戏中心） —— */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+  color: #D8DEE9;               /* nord4 */
+  font-weight: 450;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition);
+}
+
+.nav-dropdown-toggle:hover,
+.nav-dropdown-toggle.active {
+  color: #88C0D0;               /* nord8 */
+}
+
+.dropdown-arrow {
+  transition: transform var(--transition);
+  flex-shrink: 0;
+}
+
+.nav-dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  min-width: 140px;
+  background: #3B4252;          /* nord1 深色背景 */
+  border: 1px solid rgba(216, 222, 233, 0.15);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  list-style: none;
+  padding: 6px 0;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.nav-dropdown-menu.open {
+  display: block;
+  animation: dropdownIn 0.15s ease;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.nav-dropdown-menu li a {
+  display: block;
+  padding: 8px 20px;
+  font-size: var(--font-size-sm);
+  color: #D8DEE9;               /* nord4 */
+  font-weight: 450;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.nav-dropdown-menu li a:hover,
+.nav-dropdown-menu li a.active {
+  background: rgba(136, 192, 208, 0.12);  /* nord8 半透明 */
+  color: #88C0D0;               /* nord8 */
+}
+
+/* —— 搜索栏（头部导航内） —— */
+/* 外层容器预留最大宽度，搜索栏在容器内变化不会挤压两侧元素 */
+.search-form {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  width: 240px;                 /* 预留给聚焦时的最大宽度 */
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 180px;
+  max-width: 100%;
+  padding: 6px 36px 6px 14px;
+  border: 1px solid rgba(216, 222, 233, 0.25);  /* nord4 半透明 */
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: #ECEFF4;               /* nord6 浅色 */
+  outline: none;
+  transition: all var(--transition);
+}
+
+.search-input::placeholder {
+  color: rgba(236, 239, 244, 0.5);
+}
+
+.search-input:focus {
+  border-color: #88C0D0;        /* nord8 */
+  background: rgba(255, 255, 255, 0.18);
+  width: 100%;                  /* 在预留的 240px 容器内展开，不影响布局 */
+  box-shadow: 0 0 0 3px rgba(136, 192, 208, 0.15);
+}
+
+.search-btn {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  color: rgba(236, 239, 244, 0.6);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all var(--transition);
+}
+
+.search-btn:hover {
+  color: #88C0D0;               /* nord8 */
+  background: rgba(136, 192, 208, 0.12);
+}
+
+@media (max-width: 640px) {
+  .search-form {
+    width: 150px;               /* 移动端预留较小宽度 */
+  }
+  .search-input {
+    width: 120px;
+  }
+  .search-input:focus {
+    width: 100%;                /* 在预留的 150px 内展开 */
+  }
 }
 
 .btn-logout {
   background: none;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+  border: 1px solid rgba(216, 222, 233, 0.3);
+  color: #D8DEE9;               /* nord4 浅色 */
   font-size: var(--font-size-sm);
   font-family: var(--font-sans);
   padding: 4px 14px;
@@ -175,6 +328,20 @@ img {
   margin: 0 auto;
   padding: var(--gap-2xl) var(--gap-lg);
   min-height: calc(100vh - var(--header-height) - 100px);
+}
+
+/* —— 返回导航 —— */
+.back-nav {
+  margin-bottom: var(--gap-lg);
+}
+.back-nav a {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.back-nav a:hover {
+  color: var(--text-primary);
 }
 
 /* —— 文章列表（首页） —— */
@@ -226,14 +393,115 @@ img {
   gap: 4px;
 }
 
+/* —— 首页文章列表摘要（Markdown 渲染） —— */
 .post-entry-summary {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  line-height: var(--line-height);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  line-height: 1.6;
+  max-height: 7.5em;          /* 大约 4~5 行，超出裁剪 */
   overflow: hidden;
+  position: relative;
+  word-break: break-word;
+}
+/* 底部渐变遮罩：让截断更自然 */
+.post-entry-summary::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2.5em;
+  background: linear-gradient(transparent, var(--bg-card));
+  pointer-events: none;
+}
+/* 重置摘要内部 Markdown 元素的字号和间距，适配卡片紧凑排版 */
+.post-entry-summary h1,
+.post-entry-summary h2,
+.post-entry-summary h3,
+.post-entry-summary h4,
+.post-entry-summary h5,
+.post-entry-summary h6 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  margin: 0.4em 0 0.2em;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+.post-entry-summary p {
+  margin: 0.2em 0;
+  display: inline;            /* 段落内联，避免卡片内大片空白 */
+}
+.post-entry-summary ul,
+.post-entry-summary ol {
+  margin: 0.2em 0;
+  padding-left: 1.2em;
+}
+.post-entry-summary li {
+  margin-bottom: 0;
+}
+.post-entry-summary blockquote {
+  margin: 0.2em 0;
+  padding: 0.1em 0.6em;
+  border-left: 2px solid var(--border);
+  color: var(--text-muted);
+}
+.post-entry-summary code {
+  font-size: 0.85em;
+  background: var(--bg-highlight);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+}
+.post-entry-summary pre {
+  display: none;              /* 代码块在摘要中隐藏，太占空间 */
+}
+.post-entry-summary img {
+  display: none;              /* 图片在摘要中隐藏 */
+}
+.post-entry-summary a {
+  color: var(--link);
+  pointer-events: none;       /* 摘要链接不可点击（整个卡片已经是链接） */
+}
+.post-entry-summary hr {
+  display: none;
+}
+.post-entry-summary table {
+  display: none;              /* 表格在摘要中隐藏 */
+}
+
+/* 文章列表项容器（卡片 + 操作按钮） */
+.post-entry-wrapper {
+  position: relative;
+}
+
+.post-entry-wrapper .post-entry {
+  display: block;
+  padding: var(--gap-xl) 0;
+  border-bottom: 1px solid var(--border-light);
+  transition: opacity var(--transition);
+}
+
+.post-entry-wrapper:first-of-type .post-entry {
+  padding-top: 0;
+}
+
+.post-entry-wrapper .post-entry:hover {
+  opacity: 0.75;
+}
+
+/* 文章列表操作按钮（作者可见） */
+.post-entry-actions {
+  position: absolute;
+  top: var(--gap-md);
+  right: 0;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.post-entry-wrapper:hover .post-entry-actions {
+  opacity: 1;
 }
 
 /* 统计小标签 */
@@ -248,6 +516,23 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+}
+
+/* —— 创建/最后编辑时间小字 —— */
+.post-entry-dates,
+.article-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.comment-time-edited {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-left: var(--gap-sm);
 }
 
 /* —— 分页 —— */
@@ -347,8 +632,8 @@ img {
 .article-body pre {
   margin: var(--gap-md) 0;
   padding: var(--gap-md);
-  background: #2d2a28;
-  color: #e8e4df;
+  background: #3B4252;          /* nord1 极夜深色 */
+  color: #E5E9F0;               /* nord5 浅色文字 */
   border-radius: var(--radius);
   overflow-x: auto;
 }
@@ -372,6 +657,52 @@ img {
 .article-body th { background: var(--bg-page); font-weight: 600; }
 .article-body a { color: var(--link); }
 .article-body a:hover { color: var(--link-hover); }
+
+/* —— Markdown 高亮标记 —— */
+/* 同时覆盖 ==高亮==（.md-mark）与原生 <mark> 标签，避免落到浏览器默认的亮黄色。
+   取 Nord 极光黄（nord13 / --gold）作底色，深色正文保证可读性；
+   box-decoration-break: clone 让高亮在换行时每行都保持完整圆角与内边距。 */
+mark,
+mark.md-mark {
+  background: var(--gold);
+  color: var(--text-primary);
+  padding: 0.05em 0.32em;
+  border-radius: var(--radius-sm);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* —— KaTeX 数学公式 —— */
+/* 跨行公式（display / block）居中并预留上下间距 */
+.article-body .katex-display {
+  margin: var(--gap-lg) 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+
+/* 行内公式与正文文字对齐 */
+.article-body .katex {
+  font-size: 1.1em;            /* 略大一点，保证公式可读 */
+}
+
+/* KaTeX 降级兜底（KaTeX 未加载或渲染失败时） */
+.math-fallback {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--bg-highlight);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+pre.math-fallback {
+  display: block;
+  padding: var(--gap-md);
+  margin: var(--gap-md) 0;
+  overflow-x: auto;
+}
 
 /* —— 点赞按钮 —— */
 .like-section {
@@ -619,6 +950,134 @@ img {
   font-size: var(--font-size-sm);
 }
 
+/* —— 液态玻璃按钮（Glass-morphism） —— */
+/*
+   液态玻璃风格三要素：
+   1. 半透明背景 + backdrop-filter 模糊（毛玻璃核心）
+   2. 微妙渐变内阴影模拟玻璃厚度与边缘高光
+   3. 悬停时边框显色 + 轻微抬升
+   在浅色背景上玻璃感不如深色背景明显，因此用柔光渐变补强质感。
+*/
+
+.btn-glass {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 18px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  /* 毛玻璃基底：半透白 + 模糊 */
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* 玻璃边框 */
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  /* 玻璃厚度感：顶部高光 + 底部微阴影 */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.btn-glass:active {
+  transform: translateY(0);
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* 编辑变体 —— 冰蓝调（Frost） */
+.btn-glass-edit {
+  color: #5E81AC;               /* nord10 */
+  border-color: rgba(94, 129, 172, 0.2);
+}
+
+.btn-glass-edit:hover {
+  color: #4C6A8E;               /* nord10 加深 */
+  border-color: rgba(94, 129, 172, 0.45);
+  background: rgba(229, 233, 240, 0.7);
+  box-shadow:
+    0 2px 10px rgba(94, 129, 172, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* 删除变体 —— 极光红调（Aurora） */
+.btn-glass-delete {
+  color: var(--rose);
+  border-color: rgba(191, 97, 106, 0.2);
+}
+
+.btn-glass-delete:hover {
+  color: #A5454F;               /* nord11 加深 */
+  border-color: rgba(191, 97, 106, 0.5);
+  background: rgba(245, 234, 235, 0.7);
+  box-shadow:
+    0 2px 10px rgba(191, 97, 106, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* 紧凑版（评论操作栏内使用） */
+.btn-glass-sm {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  gap: 3px;
+}
+
+/* —— 文章操作栏（详情页） —— */
+.article-actions {
+  display: flex;
+  gap: var(--gap-sm);
+  padding: var(--gap-md) 0;
+  border-top: 1px solid var(--border-light);
+  margin-top: var(--gap-md);
+}
+
+/* —— OAuth 第三方登录 —— */
+.oauth-divider {
+  margin-top: var(--gap-lg);
+}
+
+.btn-github {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 24px;
+  font-size: var(--font-size-base);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  background: #3B4252;          /* nord1 */
+  color: #ECEFF4;               /* nord6 */
+  border: 1px solid #3B4252;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-github:hover {
+  background: #2E3440;          /* nord0 */
+  border-color: #2E3440;
+}
+
+.btn-github .github-icon {
+  flex-shrink: 0;
+}
+
 /* —— 表单（登录/注册页） —— */
 .auth-page {
   display: flex;
@@ -715,100 +1174,6 @@ img {
   resize: vertical;
 }
 
-/* 编辑器标签栏（编辑 / 预览） */
-.editor-tabs {
-  display: flex;
-  gap: 2px;
-  margin-bottom: -1px;
-}
-
-.editor-tab {
-  padding: 8px 20px;
-  background: var(--bg-page);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  font-family: var(--font-sans);
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.editor-tab.active {
-  background: var(--bg-card);
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.editor-tab:hover:not(.active) {
-  color: var(--text-secondary);
-}
-
-/* 预览区 — Markdown 渲染结果 */
-.editor-preview {
-  min-height: 400px;
-  padding: var(--gap-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) var(--radius-sm);
-  font-size: var(--font-size-base);
-  line-height: 1.85;
-  color: var(--text-primary);
-  overflow-y: auto;
-}
-
-.editor-preview h1 { font-size: var(--font-size-2xl); margin: var(--gap-lg) 0 var(--gap-sm); }
-.editor-preview h2 { font-size: var(--font-size-xl); margin: var(--gap-lg) 0 var(--gap-sm); }
-.editor-preview h3 { font-size: var(--font-size-lg); margin: var(--gap-md) 0 var(--gap-xs); }
-.editor-preview p  { margin-bottom: var(--gap-md); }
-.editor-preview ul,
-.editor-preview ol { margin: var(--gap-sm) 0 var(--gap-md); padding-left: var(--gap-xl); }
-.editor-preview li { margin-bottom: var(--gap-xs); }
-.editor-preview blockquote {
-  margin: var(--gap-md) 0;
-  padding: var(--gap-sm) var(--gap-lg);
-  border-left: 3px solid var(--accent);
-  background: var(--bg-page);
-  color: var(--text-secondary);
-}
-.editor-preview code {
-  padding: 2px 6px;
-  background: var(--bg-page);
-  border-radius: 3px;
-  font-family: var(--font-mono);
-  font-size: 0.9em;
-  color: var(--rose);
-}
-.editor-preview pre {
-  margin: var(--gap-md) 0;
-  padding: var(--gap-md);
-  background: var(--text-primary);
-  color: var(--bg-page);
-  border-radius: var(--radius);
-  overflow-x: auto;
-}
-.editor-preview pre code {
-  padding: 0;
-  background: none;
-  color: inherit;
-  font-size: var(--font-size-sm);
-}
-.editor-preview a { color: var(--link); }
-.editor-preview a:hover { color: var(--link-hover); }
-.editor-preview img { max-width: 100%; border-radius: var(--radius-sm); margin: var(--gap-sm) 0; }
-.editor-preview hr { border: none; border-top: 1px solid var(--border-light); margin: var(--gap-xl) 0; }
-.editor-preview table {
-  width: 100%; border-collapse: collapse; margin: var(--gap-md) 0;
-}
-.editor-preview th,
-.editor-preview td {
-  padding: var(--gap-sm) var(--gap-md);
-  border: 1px solid var(--border-light);
-  text-align: left;
-}
-.editor-preview th { background: var(--bg-page); font-weight: 600; }
-
 /* —— 页脚 —— */
 .site-footer {
   text-align: center;
@@ -844,12 +1209,12 @@ img {
 }
 .toast.success {
   background: var(--sage-light);
-  color: #4a7c6b;
+  color: #5A7D4A;               /* nord14 深绿 */
   border: 1px solid var(--sage);
 }
 .toast.error {
   background: var(--rose-light);
-  color: #8b5a52;
+  color: #A5454F;               /* nord11 深红 */
   border: 1px solid var(--rose);
 }
 

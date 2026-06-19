@@ -19,6 +19,8 @@ type PostListItem struct {
 	AuthorID      int64     `json:"author_id"`
 	AuthorName    string    `json:"author_name"`
 	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	IsEdited      bool      `json:"is_edited"`     // 是否在创建后被编辑过
 	ReadingTime   int       `json:"reading_time"`   // 估算阅读分钟数
 	CommentsCount int64     `json:"comments_count"` // 评论数
 	LikesCount    int64     `json:"likes_count"`    // 点赞数
@@ -32,6 +34,7 @@ type PostDetail struct {
 	AuthorName    string    `json:"author_name"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+	IsEdited      bool      `json:"is_edited"`     // 是否在创建后被编辑过
 	ReadingTime   int       `json:"reading_time"`
 	CommentsCount int64     `json:"comments_count"`
 	LikesCount    int64     `json:"likes_count"`

@@ -1,5 +1,4 @@
-
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
@@ -17,6 +16,7 @@ FROM alpine:3.21
 
 # 时区 + 基础工具
 RUN apk add --no-cache ca-certificates tzdata
+ENV TZ=Asia/Shanghai
 
 WORKDIR /app
 
@@ -26,5 +26,8 @@ COPY --from=builder /blog-server .
 COPY frontend/ ./frontend/
 
 EXPOSE 8080
+
+# 健康检查
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 CMD ["./blog-server"]

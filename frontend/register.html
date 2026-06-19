@@ -2,18 +2,35 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data: https://cdnjs.cloudflare.com;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>注册 — 我的博客</title>
+  <title>注册 — 灰化肥发灰的小站</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header class="site-header">
   <div class="header-inner">
-    <a href="/" class="site-title">我的博客</a>
+    <a href="/" class="site-title">灰化肥发灰的小站</a>
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索文章…" autocomplete="off">
+      <button type="submit" class="search-btn" aria-label="搜索" title="搜索">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
     <nav>
       <ul class="nav-links" id="navLinks">
         <li><a href="/">首页</a></li>
+        <li class="nav-dropdown" id="gameDropdown">
+          <button class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+            游戏中心
+            <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 1 5 5 9 1"/></svg>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="/2048.html">2048</a></li>
+            <li><a href="/leaderboard.html">排行榜</a></li>
+          </ul>
+        </li>
         <li><a href="/login.html">登录</a></li>
         <li><a href="/register.html" class="active">注册</a></li>
       </ul>
@@ -40,12 +57,21 @@
 
       <div class="form-group" id="passwordGroup">
         <label for="password">密码</label>
-        <input type="password" id="password" placeholder="至少 6 位" autocomplete="new-password" required>
+        <input type="password" id="password" placeholder="至少 8 位，需包含字母和数字" autocomplete="new-password" required>
         <span class="error-msg" id="passwordError"></span>
       </div>
 
       <button type="submit" class="btn btn-primary" id="submitBtn">注册</button>
     </form>
+
+    <div class="oauth-divider">
+      <button class="btn btn-github" onclick="handleGitHubLogin()">
+        <svg class="github-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        GitHub 登录
+      </button>
+    </div>
 
     <p class="auth-switch">
       已有账号？<a href="/login.html">去登录 →</a>
@@ -54,7 +80,7 @@
 </main>
 
 <footer class="site-footer">
-  &copy; 2026 我的博客
+  &copy; 2026 灰化肥发灰的小站
 </footer>
 
 <script src="/js/common.js"></script>
@@ -63,9 +89,20 @@
    注册页
    ============================================================ */
 
+updateHeader();
+
 // 已登录的用户直接跳转
 if (isLoggedIn()) {
   window.location.href = getRedirectURL();
+}
+
+// GitHub 登录：跳转到后端授权接口，携带 redirect 参数以便登录后回到原页面
+function handleGitHubLogin() {
+  const redirect = getQueryParam('redirect');
+  const url = redirect
+    ? '/api/v1/auth/github?redirect=' + encodeURIComponent(redirect)
+    : '/api/v1/auth/github';
+  window.location.href = url;
 }
 
 function showFieldError(field, msg) {
@@ -100,8 +137,10 @@ async function handleRegister(e) {
     showFieldError('email', '请输入邮箱');
     valid = false;
   }
-  if (!password || password.length < 6) {
-    showFieldError('password', '密码至少 6 位');valid = false;
+  if (!password || password.length < 8) {
+    showFieldError('password', '密码至少 8 位');valid = false;
+  } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+    showFieldError('password', '密码需同时包含字母和数字');valid = false;
   }
   if (!valid) return;
 

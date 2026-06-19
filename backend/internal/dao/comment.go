@@ -14,6 +14,9 @@ func NewCommentDAO(db *gorm.DB) *CommentDAO {
 	return &CommentDAO{db: db}
 }
 
+// DB 暴露底层 *gorm.DB，用于跨 DAO 的事务编排
+func (d *CommentDAO) DB() *gorm.DB { return d.db }
+
 func (d *CommentDAO) Create(comment *model.Comment) error {
 	return d.db.Create(comment).Error
 }
@@ -40,6 +43,17 @@ func (d *CommentDAO) CountByPostID(postID int64) (int64, error) {
 	var count int64
 	err := d.db.Model(&model.Comment{}).Where("post_id = ?", postID).Count(&count).Error
 	return count, err
+}
+
+// Delete 删除单条评论（数据库 FK 会级联删除子回复）
+func (d *CommentDAO) Delete(id int64) error {
+	return d.db.Delete(&model.Comment{}, id).Error
+}
+
+// Update 更新评论正文和更新时间。
+// 使用 Select 指定要更新的列，避免 Save 的全字段覆盖和 upsert 行为。
+func (d *CommentDAO) Update(comment *model.Comment) error {
+	return d.db.Model(comment).Select("content", "updated_at").Updates(comment).Error
 }
 
 // CountByPostIDs 批量统计多篇文章的评论数，返回 map[postID]count

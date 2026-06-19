@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data: https://cdnjs.cloudflare.com;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户管理 — 灰化肥发灰的小站</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: var(--gap-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .users-table th,
+    .users-table td {
+      padding: 12px var(--gap-md);
+      text-align: left;
+      border-bottom: 1px solid var(--border-light);
+      font-size: var(--font-size-sm);
+    }
+    .users-table th {
+      background: var(--bg-page);
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .users-table td {
+      color: var(--text-primary);
+    }
+    .users-table tr:last-child td {
+      border-bottom: none;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .badge-admin {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    .badge-user {
+      background: var(--bg-highlight);
+      color: var(--text-muted);
+    }
+
+    /* —— 操作栏下拉菜单 —— */
+    .user-action-select {
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      font-family: var(--font-sans);
+      font-size: var(--font-size-sm);
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      transition: border-color var(--transition);
+      min-width: 90px;
+    }
+    .user-action-select:focus {
+      border-color: var(--accent);
+    }
+
+    /* —— 编辑弹窗 —— */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(46, 52, 64, 0.5);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-dialog {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: var(--gap-xl);
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow-lg);
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-dialog h2 {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--gap-lg);
+    }
+    .modal-dialog .form-group {
+      margin-bottom: var(--gap-md);
+    }
+    .modal-dialog .form-group label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .modal-dialog .form-group input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-page);
+      font-family: var(--font-sans);
+      font-size: var(--font-size-base);
+      color: var(--text-primary);
+      transition: border-color var(--transition);
+    }
+    .modal-dialog .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--bg-card);
+    }
+    .modal-dialog .form-group .error-msg {
+      font-size: var(--font-size-sm);
+      color: var(--rose);
+      margin-top: 2px;
+      display: none;
+    }
+    .modal-dialog .form-group.has-error .error-msg {
+      display: block;
+    }
+    .modal-dialog .form-group.has-error input {
+      border-color: var(--rose);
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      accent-color: var(--accent);
+    }
+    .checkbox-group label {
+      margin-bottom: 0 !important;
+      cursor: pointer;
+    }
+    .modal-actions {
+      display: flex;
+      gap: var(--gap-sm);
+      justify-content: flex-end;
+      margin-top: var(--gap-lg);
+    }
+    .modal-actions .btn {
+      min-width: 80px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-title">灰化肥发灰的小站</a>
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索文章…" autocomplete="off">
+      <button type="submit" class="search-btn" aria-label="搜索" title="搜索">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">首页</a></li>
+        <li class="nav-dropdown" id="gameDropdown">
+          <button class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+            游戏中心
+            <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 1 5 5 9 1"/></svg>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="/2048.html">2048</a></li>
+            <li><a href="/leaderboard.html">排行榜</a></li>
+          </ul>
+        </li>
+        <li><a href="/login.html">登录</a></li>
+        <li><a href="/register.html">注册</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="post-list-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <h1 style="margin-bottom:0;">用户管理</h1>
+    <button class="btn btn-primary btn-sm" onclick="openCreateModal()" style="flex-shrink:0;">+ 创建用户</button>
+  </div>
+
+  <div id="userList">
+    <div class="empty-state"><p>加载中…</p></div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 灰化肥发灰的小站
+</footer>
+
+<!-- —— 创建用户弹窗 —— -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal-dialog">
+    <h2>创建用户</h2>
+    <form id="createUserForm" onsubmit="submitCreateUser(event)">
+      <div class="form-group" id="createUsernameGroup">
+        <label for="createUsername">用户名</label>
+        <input type="text" id="createUsername" placeholder="2~50 个字符" maxlength="50" required>
+        <span class="error-msg" id="createUsernameError"></span>
+      </div>
+
+      <div class="form-group" id="createEmailGroup">
+        <label for="createEmail">邮箱</label>
+        <input type="email" id="createEmail" placeholder="请输入邮箱" maxlength="100" required>
+        <span class="error-msg" id="createEmailError"></span>
+      </div>
+
+      <div class="form-group" id="createPasswordGroup">
+        <label for="createPassword">密码</label>
+        <input type="password" id="createPassword" placeholder="至少 8 位，需包含字母和数字" minlength="8" required>
+        <span class="error-msg" id="createPasswordError"></span>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">取消</button>
+        <button type="submit" class="btn btn-primary" id="createSubmitBtn">创建</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- —— 编辑用户弹窗 —— -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-dialog">
+    <h2>编辑用户</h2>
+    <form id="editUserForm" onsubmit="submitUserEdit(event)">
+      <input type="hidden" id="editUserId">
+
+      <div class="form-group" id="editUsernameGroup">
+        <label for="editUsername">用户名</label>
+        <input type="text" id="editUsername" maxlength="50" required>
+        <span class="error-msg" id="editUsernameError"></span>
+      </div>
+
+      <div class="form-group" id="editEmailGroup">
+        <label for="editEmail">邮箱</label>
+        <input type="email" id="editEmail" maxlength="100" required>
+        <span class="error-msg" id="editEmailError"></span>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="editIsAdmin">
+          <label for="editIsAdmin">管理员权限</label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button type="submit" class="btn btn-primary" id="editSubmitBtn">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/common.js"></script>
+<script>
+/* ============================================================
+   用户管理页 — 仅管理员可访问
+   支持：查看列表、编辑用户、删除用户
+   ============================================================ */
+
+(function() {
+  // 非管理员跳转首页
+  if (!isLoggedIn() || !isAdmin()) {
+    window.location.href = '/';
+    return;
+  }
+
+  // —— 用户数据缓存（按 ID 索引，供下拉菜单回调使用）——
+  let userCache = {};
+
+  async function loadUsers() {
+    const el = document.getElementById('userList');
+    userCache = {};
+
+    try {
+      const data = await api.get('/admin/users');
+      const users = data.data.users;
+
+      if (!users || users.length === 0) {
+        el.innerHTML = '<div class="empty-state"><p>暂无用户</p></div>';
+        window._userCache = userCache;
+        return;
+      }
+
+      const currentUser = getUser();
+
+      const rows = users.map(u => {
+        // 缓存用户数据供下拉菜单回调使用
+        userCache[u.id] = u;
+
+        // 不能删除自己
+        const deleteDisabled = (currentUser && currentUser.id === u.id) ? ' disabled' : '';
+
+        return `
+        <tr>
+          <td>${u.id}</td>
+          <td>${escapeHTML(u.username)}</td>
+          <td>${escapeHTML(u.email)}</td>
+          <td><span class="badge ${u.is_admin ? 'badge-admin' : 'badge-user'}">${u.is_admin ? '管理员' : '普通用户'}</span></td>
+          <td>${formatDate(u.created_at)}</td>
+          <td>
+            <select class="user-action-select" onchange="handleUserAction(this, ${u.id})">
+              <option value="" selected disabled hidden>编辑</option>
+              <option value="edit">📝 编辑</option>
+              <option value="delete"${deleteDisabled}>🗑 删除</option>
+            </select>
+          </td>
+        </tr>
+      `}).join('');
+
+      // 同步全局缓存引用，确保 handleUserAction 等函数能读取到最新数据
+      window._userCache = userCache;
+
+      el.innerHTML = `
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>用户名</th>
+              <th>邮箱</th>
+              <th>角色</th>
+              <th>注册时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+    } catch (err) {
+      el.innerHTML = `<div class="empty-state"><p>加载失败：${escapeHTML(err.message)}</p></div>`;
+    }
+  }
+
+  updateHeader();
+  loadUsers();
+
+  // 暴露 loadUsers 到全局，供 handleUserAction 调用
+  window._reloadUsers = loadUsers;
+  window._userCache = userCache;
+})();
+
+/* —— 操作下拉菜单 —— */
+
+function handleUserAction(selectEl, userId) {
+  const action = selectEl.value;
+  if (!action) return;
+
+  if (action === 'edit') {
+    openEditModal(userId);
+  } else if (action === 'delete') {
+    const user = window._userCache[userId];
+    const userName = user ? user.username : 'ID=' + userId;
+    if (confirm('确定要删除「' + userName + '」吗？此操作不可逆！')) {
+      deleteUser(userId);
+    }
+  }
+
+  // 重置下拉菜单为默认状态
+  selectEl.value = '';
+}
+
+/* —— 编辑用户弹窗 —— */
+
+function openEditModal(userId) {
+  const user = window._userCache[userId];
+  if (!user) {
+    showToast('用户数据未找到', 'error');
+    return;
+  }
+
+  document.getElementById('editUserId').value = user.id;
+  document.getElementById('editUsername').value = user.username;
+  document.getElementById('editEmail').value = user.email;
+  document.getElementById('editIsAdmin').checked = user.is_admin;
+
+  // 清空错误状态
+  clearFieldError('editUsername');
+  clearFieldError('editEmail');
+
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('open');
+}
+
+// 点击遮罩关闭弹窗
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function clearFieldError(field) {
+  const group = document.getElementById(field + 'Group');
+  const error = document.getElementById(field + 'Error');
+  if (group) group.classList.remove('has-error');
+  if (error) error.textContent = '';
+}
+
+function showFieldError(field, msg) {
+  const group = document.getElementById(field + 'Group');
+  const error = document.getElementById(field + 'Error');
+  if (group) group.classList.add('has-error');
+  if (error) error.textContent = msg;
+}
+
+async function submitUserEdit(e) {
+  e.preventDefault();
+
+  const userId = parseInt(document.getElementById('editUserId').value);
+  const username = document.getElementById('editUsername').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+  const isAdmin = document.getElementById('editIsAdmin').checked;
+
+  // 清空旧错误
+  clearFieldError('editUsername');
+  clearFieldError('editEmail');
+
+  let valid = true;
+  if (!username || username.length < 2 || username.length > 50) {
+    showFieldError('editUsername', '用户名需要 2~50 个字符');
+    valid = false;
+  }
+  if (!email) {
+    showFieldError('editEmail', '请输入邮箱');
+    valid = false;
+  }
+  if (!valid) return;
+
+  const btn = document.getElementById('editSubmitBtn');
+  btn.textContent = '保存中…';
+  btn.disabled = true;
+
+  try {
+    await api.put('/admin/users/' + userId, {
+      username: username,
+      email: email,
+      is_admin: isAdmin
+    });
+    showToast('用户信息已更新');
+    closeModal();
+    window._reloadUsers();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.textContent = '保存';
+    btn.disabled = false;
+  }
+}
+
+/* —— 删除用户 —— */
+
+async function deleteUser(userId) {
+  try {
+    await api.delete('/admin/users/' + userId);
+    showToast('用户已删除');
+    window._reloadUsers();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+/* —— 创建用户弹窗 —— */
+
+function openCreateModal() {
+  // 清空表单
+  document.getElementById('createUsername').value = '';
+  document.getElementById('createEmail').value = '';
+  document.getElementById('createPassword').value = '';
+  clearCreateFieldError('createUsername');
+  clearCreateFieldError('createEmail');
+  clearCreateFieldError('createPassword');
+  document.getElementById('createModal').classList.add('open');
+}
+
+function closeCreateModal() {
+  document.getElementById('createModal').classList.remove('open');
+}
+
+// 点击遮罩关闭弹窗
+document.getElementById('createModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCreateModal();
+});
+
+function clearCreateFieldError(field) {
+  var group = document.getElementById(field + 'Group');
+  var error = document.getElementById(field + 'Error');
+  if (group) group.classList.remove('has-error');
+  if (error) error.textContent = '';
+}
+
+function showCreateFieldError(field, msg) {
+  var group = document.getElementById(field + 'Group');
+  var error = document.getElementById(field + 'Error');
+  if (group) group.classList.add('has-error');
+  if (error) error.textContent = msg;
+}
+
+async function submitCreateUser(e) {
+  e.preventDefault();
+
+  var username = document.getElementById('createUsername').value.trim();
+  var email = document.getElementById('createEmail').value.trim();
+  var password = document.getElementById('createPassword').value;
+
+  clearCreateFieldError('createUsername');
+  clearCreateFieldError('createEmail');
+  clearCreateFieldError('createPassword');
+
+  var valid = true;
+  if (!username || username.length < 2 || username.length > 50) {
+    showCreateFieldError('createUsername', '用户名需要 2~50 个字符');
+    valid = false;
+  }
+  if (!email) {
+    showCreateFieldError('createEmail', '请输入邮箱');
+    valid = false;
+  }
+  if (!password || password.length < 8) {
+    showCreateFieldError('createPassword', '密码至少 8 位');
+    valid = false;
+  } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+    showCreateFieldError('createPassword', '密码需同时包含字母和数字');
+    valid = false;
+  }
+  if (!valid) return;
+
+  var btn = document.getElementById('createSubmitBtn');
+  btn.textContent = '创建中…';
+  btn.disabled = true;
+
+  try {
+    await api.post('/admin/users', {
+      username: username,
+      email: email,
+      password: password,
+      is_admin: false
+    });
+    showToast('用户创建成功');
+    closeCreateModal();
+    window._reloadUsers();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.textContent = '创建';
+    btn.disabled = false;
+  }
+}
+</script>
+
+</body>
+</html>

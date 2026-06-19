@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data: https://cdnjs.cloudflare.com;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>排行榜 — 灰化肥发灰的小站</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* —— Leaderboard page layout —— */
+    .leaderboard-page {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .leaderboard-page-header {
+      margin-bottom: var(--gap-xl);
+    }
+
+    .leaderboard-page-header h1 {
+      font-size: var(--font-size-2xl);
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .leaderboard-page-header p {
+      font-size: var(--font-size-sm);
+      color: var(--text-muted);
+      margin-top: var(--gap-xs);
+    }
+
+    /* —— Game section (one per game) —— */
+    .game-leaderboard-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: var(--gap-xl);
+      margin-bottom: var(--gap-lg);
+    }
+
+    .game-leaderboard-section .game-section-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--gap-md);
+      padding-bottom: var(--gap-sm);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* —— Leaderboard table within section —— */
+    .lb-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--font-size-sm);
+    }
+
+    .lb-table th {
+      text-align: left;
+      padding: 10px 8px;
+      color: var(--text-muted);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .lb-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .lb-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .lb-table .col-rank {
+      width: 56px;
+      text-align: center;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-secondary);
+    }
+
+    .lb-table .col-score {
+      text-align: right;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+    }
+
+    .lb-table .col-time {
+      text-align: right;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* Top 3 row highlights */
+    .lb-table tr.row-top-1 td {
+      background: var(--accent-light);
+    }
+    .lb-table tr.row-top-2 td {
+      background: rgba(229, 233, 240, 0.4);
+    }
+    .lb-table tr.row-top-3 td {
+      background: rgba(229, 233, 240, 0.25);
+    }
+
+    .lb-table tr.row-top-1 .col-rank,
+    .lb-table tr.row-top-2 .col-rank,
+    .lb-table tr.row-top-3 .col-rank {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    /* Section footer */
+    .lb-section-footer {
+      margin-top: var(--gap-sm);
+      padding-top: var(--gap-sm);
+      border-top: 1px solid var(--border-light);
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* States */
+    .lb-loading,
+    .lb-empty,
+    .lb-error {
+      text-align: center;
+      padding: var(--gap-xl) 0;
+      color: var(--text-muted);
+      font-size: var(--font-size-sm);
+    }
+
+    .lb-error {
+      color: var(--rose);
+    }
+
+    /* User best */
+    .lb-user-best {
+      margin-top: var(--gap-md);
+      padding-top: var(--gap-md);
+      border-top: 1px solid var(--border-light);
+      text-align: center;
+    }
+
+    .lb-user-best-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .lb-user-best-score {
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .lb-user-best-rank {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-title">灰化肥发灰的小站</a>
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索文章…" autocomplete="off">
+      <button type="submit" class="search-btn" aria-label="搜索" title="搜索">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">首页</a></li>
+        <li class="nav-dropdown" id="gameDropdown">
+          <button class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+            游戏中心
+            <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 1 5 5 9 1"/></svg>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="/2048.html">2048</a></li>
+            <li><a href="/leaderboard.html">排行榜</a></li>
+          </ul>
+        </li>
+        <li><a href="/login.html">登录</a></li>
+        <li><a href="/register.html">注册</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="main-content leaderboard-page">
+
+
+  <div class="leaderboard-page-header">
+    <h1>排行榜</h1>
+    <p>游戏成绩排名</p>
+  </div>
+
+  <!-- 2048 Leaderboard -->
+  <div class="game-leaderboard-section" id="section2048">
+    <div class="game-section-title">2048</div>
+
+    <div id="lb2048Content">
+      <div class="lb-loading">Loading...</div>
+    </div>
+
+    <div id="lb2048UserBest" class="lb-user-best" style="display:none;"></div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 灰化肥发灰的小站
+</footer>
+
+<script src="/js/common.js"></script>
+<script>
+/* ============================================================
+   Leaderboard — cold, minimal
+   ============================================================ */
+
+async function loadLeaderboard(game, contentElId, userBestElId) {
+  var contentEl = document.getElementById(contentElId);
+  var userBestEl = document.getElementById(userBestElId);
+
+  contentEl.innerHTML = '<div class="lb-loading">Loading...</div>';
+
+  try {
+    var data = await api.get('/games/leaderboard?game=' + game + '&limit=10');
+
+    if (!data.data || !data.data.entries || data.data.entries.length === 0) {
+      contentEl.innerHTML = '<div class="lb-empty">No scores yet. Be the first!</div>';
+    } else {
+      var rows = data.data.entries.map(function(entry) {
+        var rowClass = entry.rank <= 3 ? ' row-top-' + entry.rank : '';
+        var achievedTime = formatDateTime(entry.achieved_at);
+        return '<tr class="' + rowClass + '">' +
+          '<td class="col-rank">' + escapeHTML(String(entry.rank)) + '</td>' +
+          '<td class="col-player">' + escapeHTML(entry.username) + '</td>' +
+          '<td class="col-score">' + (entry.score != null ? entry.score.toLocaleString() : '0') + '</td>' +
+          '<td class="col-time">' + escapeHTML(achievedTime) + '</td>' +
+        '</tr>';
+      }).join('');
+
+      contentEl.innerHTML =
+        '<table class="lb-table">' +
+          '<thead><tr>' +
+            '<th class="col-rank">#</th>' +
+            '<th>Player</th>' +
+            '<th class="col-score">Score</th>' +
+            '<th class="col-time">Time</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        '<div class="lb-section-footer">' +
+          data.data.total_players + ' player(s) total' +
+        '</div>';
+    }
+
+    // User personal best
+    if (userBestEl) {
+      if (data.data.user_best && data.data.user_best.score > 0) {
+        userBestEl.style.display = 'block';
+        userBestEl.innerHTML =
+          '<div class="lb-user-best-title">Your Best</div>' +
+          '<div class="lb-user-best-score">' + data.data.user_best.score.toLocaleString() + '</div>' +
+          '<div class="lb-user-best-rank">Rank #' + data.data.user_best.rank + '</div>';
+      } else if (isLoggedIn()) {
+        userBestEl.style.display = 'block';
+        userBestEl.innerHTML =
+          '<div class="lb-user-best-title">No score yet</div>' +
+          '<div style="font-size:var(--font-size-sm);color:var(--text-muted);margin-top:4px;">Play 2048 to get on the board</div>';
+      } else {
+        userBestEl.style.display = 'none';
+      }
+    }
+  } catch (err) {
+    contentEl.innerHTML = '<div class="lb-error">Failed to load: ' + escapeHTML(err.message) + '</div>';
+  }
+}
+
+// —— 从 2048 页面传递的待确认分数 ——
+// 2048 的 beforeunload 在 keepalive 提交之前将分数写入此 key，
+// 排行榜页面用它做乐观显示并轮询后端确认，消除 keepalive 竞态。
+function getPendingBoardScore(game) {
+  try {
+    var raw = localStorage.getItem('pendingBoardRefresh');
+    if (!raw) return 0;
+    var data = JSON.parse(raw);
+    // 只信任 30 秒内的标记，过期则清除
+    if (Date.now() - data.time > 30000) {
+      localStorage.removeItem('pendingBoardRefresh');
+      return 0;
+    }
+    if (data.game === game && data.score > 0) {
+      return data.score;
+    }
+  } catch (e) {}
+  return 0;
+}
+
+// Init with polling if coming from 2048
+updateHeader();
+var expectedScore = getPendingBoardScore('2048');
+
+loadLeaderboard('2048', 'lb2048Content', 'lb2048UserBest').then(function() {
+  if (expectedScore <= 0) return;
+
+  // 乐观显示：如果后端尚未确认，先展示预期的本地分数
+  var userBestEl = document.getElementById('lb2048UserBest');
+  if (userBestEl) {
+    var data = null;
+    // 无法同步获取 loadLeaderboard 的结果，直接检查 userBestEl 的内容
+    if (userBestEl.style.display === 'none' || userBestEl.textContent.indexOf('No score yet') !== -1) {
+      userBestEl.style.display = 'block';
+      userBestEl.innerHTML =
+        '<div class="lb-user-best-title">Your Best (syncing…)</div>' +
+        '<div class="lb-user-best-score">' + expectedScore.toLocaleString() + '</div>' +
+        '<div style="font-size:var(--font-size-sm);color:var(--text-muted);margin-top:4px;">确认中…</div>';
+    }
+  }
+
+  // 轮询后端直到分数被确认（最多 5 次，间隔 1.5s）
+  var attempts = 0;
+  var maxAttempts = 5;
+  function poll() {
+    if (attempts >= maxAttempts) {
+      localStorage.removeItem('pendingBoardRefresh');
+      // 最后一次静默刷新，确保最终展示的是后端最新数据
+      loadLeaderboard('2048', 'lb2048Content', 'lb2048UserBest');
+      return;
+    }
+    attempts++;
+    setTimeout(function() {
+      api.get('/games/leaderboard?game=2048&limit=10').then(function(data) {
+        if (data.data && data.data.user_best && data.data.user_best.score >= expectedScore) {
+          // 后端已确认 → 刷新展示并清除标记
+          localStorage.removeItem('pendingBoardRefresh');
+          loadLeaderboard('2048', 'lb2048Content', 'lb2048UserBest');
+        } else {
+          poll();
+        }
+      }).catch(function() {
+        poll(); // 网络错误也继续重试
+      });
+    }, 1500);
+  }
+  poll();
+});
+</script>
+
+</body>
+</html>

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"personal-blog-backend/internal/pkg/apperror"
+	"personal-blog-backend/internal/pkg/middleware"
 	"personal-blog-backend/internal/pkg/response"
 	likeservice "personal-blog-backend/internal/service/like"
 
@@ -27,7 +28,11 @@ func (ctrl *Controller) TogglePost(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetInt64("userID")
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "服务器内部错误")
+		return
+	}
 	result, err := ctrl.likeService.TogglePost(userID, postID)
 	if err != nil {
 		if apperror.IsBadRequest(err) {
@@ -43,14 +48,24 @@ func (ctrl *Controller) TogglePost(c *gin.Context) {
 
 // ToggleComment 切换评论点赞 POST /api/v1/posts/:id/comments/:commentId/like
 func (ctrl *Controller) ToggleComment(c *gin.Context) {
+	postID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "文章ID格式错误")
+		return
+	}
+
 	commentID, err := strconv.ParseInt(c.Param("commentId"), 10, 64)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "评论ID格式错误")
 		return
 	}
 
-	userID := c.GetInt64("userID")
-	result, err := ctrl.likeService.ToggleComment(userID, commentID)
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "服务器内部错误")
+		return
+	}
+	result, err := ctrl.likeService.ToggleComment(userID, postID, commentID)
 	if err != nil {
 		if apperror.IsBadRequest(err) {
 			response.Error(c, http.StatusBadRequest, err.Error())

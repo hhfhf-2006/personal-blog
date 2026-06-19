@@ -1,0 +1,71 @@
+name: CI
+
+# 持续集成：每次推送到 main 或提交 PR 时，自动检查后端代码与 Docker 构建
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ---------- 任务 1：后端代码质量检查 ----------
+  backend:
+    name: 后端 lint / build / test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Go 环境
+        uses: actions/setup-go@v5
+        with:
+          # 直接读取 backend/go.mod 中声明的版本，与本地保持一致
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: 下载依赖
+        run: go mod download
+
+      - name: 格式检查 (gofmt) — 仅提示，不阻断
+        continue-on-error: true
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::warning::以下文件未通过 gofmt 格式化，建议运行 'gofmt -w .'："
+            echo "$unformatted"
+          else
+            echo "所有文件均已正确格式化。"
+          fi
+
+      - name: 静态检查 (go vet)
+        run: go vet ./...
+
+      - name: 编译 (go build)
+        run: go build ./...
+
+      - name: 单元测试 (go test)
+        run: go test ./... -v
+
+  # ---------- 任务 2：Docker 镜像构建验证 ----------
+  docker-build:
+    name: Docker 镜像构建验证
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 构建镜像（只构建，不推送）
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: personal-blog:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data: https://cdnjs.cloudflare.com;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人中心 — 灰化肥发灰的小站</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* —— 个人中心：大型资料窗口 —— */
+    .profile-wrap {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .profile-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* 顶部信息横幅 —— Frost 冰蓝渐变（nord10 → nord9） */
+    .profile-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-lg);
+      padding: var(--gap-xl);
+      background: linear-gradient(135deg, #5E81AC 0%, #81A1C1 100%);
+      color: #ECEFF4;
+    }
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(236, 239, 244, 0.6);
+      object-fit: cover;
+      background: rgba(236, 239, 244, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #ECEFF4;
+    }
+    .profile-banner-info {
+      min-width: 0;
+    }
+    .profile-banner-info h1 {
+      font-size: var(--font-size-xl);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+    .profile-banner-info .profile-email {
+      font-size: var(--font-size-sm);
+      color: rgba(236, 239, 244, 0.82);
+      word-break: break-all;
+    }
+    .profile-role {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: rgba(236, 239, 244, 0.18);
+      color: #ECEFF4;
+    }
+
+    /* 分区 */
+    .profile-section {
+      padding: var(--gap-xl);
+    }
+    .profile-section + .profile-section {
+      border-top: 1px solid var(--border-light);
+    }
+    .profile-section h2 {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .section-hint {
+      font-size: var(--font-size-sm);
+      color: var(--text-muted);
+      margin-bottom: var(--gap-lg);
+    }
+
+    .profile-section .form-group {
+      margin-bottom: var(--gap-md);
+    }
+
+    .profile-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--gap-sm);
+      margin-top: var(--gap-lg);
+    }
+    .profile-actions .btn {
+      min-width: 96px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-title">灰化肥发灰的小站</a>
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索文章…" autocomplete="off">
+      <button type="submit" class="search-btn" aria-label="搜索" title="搜索">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
+    <nav>
+      <ul class="nav-links" id="navLinks"></ul>
+    </nav>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="profile-wrap">
+    <div class="post-list-header" style="margin-bottom:var(--gap-lg);">
+      <h1 style="font-size:var(--font-size-2xl);">个人中心</h1>
+    </div>
+
+    <div class="profile-card">
+      <!-- 顶部信息横幅 -->
+      <div class="profile-banner">
+        <div class="profile-avatar" id="profileAvatar">—</div>
+        <div class="profile-banner-info">
+          <h1 id="bannerName">加载中…</h1>
+          <div class="profile-email" id="bannerEmail"></div>
+          <span class="profile-role" id="bannerRole" style="display:none;"></span>
+        </div>
+      </div>
+
+      <!-- 账户信息 -->
+      <form class="profile-section" id="infoForm" onsubmit="submitProfile(event)">
+        <h2>账户信息</h2>
+        <p class="section-hint">在这里更新你的昵称与邮箱。</p>
+
+        <div class="form-group" id="usernameGroup">
+          <label for="username">昵称</label>
+          <input type="text" id="username" placeholder="2~50 个字符" maxlength="50" required>
+          <span class="error-msg" id="usernameError"></span>
+        </div>
+
+        <div class="form-group" id="emailGroup">
+          <label for="email">邮箱</label>
+          <input type="email" id="email" placeholder="请输入邮箱" maxlength="100" required>
+          <span class="error-msg" id="emailError"></span>
+        </div>
+
+        <h2 style="margin-top:var(--gap-xl);">修改密码</h2>
+        <p class="section-hint">如不修改密码，请将以下三项留空。</p>
+
+        <div class="form-group" id="oldPasswordGroup">
+          <label for="oldPassword">当前密码</label>
+          <input type="password" id="oldPassword" placeholder="修改密码时填写" autocomplete="current-password">
+          <span class="error-msg" id="oldPasswordError"></span>
+        </div>
+
+        <div class="form-group" id="newPasswordGroup">
+          <label for="newPassword">新密码</label>
+          <input type="password" id="newPassword" placeholder="至少 8 位，需包含字母和数字" autocomplete="new-password">
+          <span class="error-msg" id="newPasswordError"></span>
+        </div>
+
+        <div class="form-group" id="confirmPasswordGroup">
+          <label for="confirmPassword">确认新密码</label>
+          <input type="password" id="confirmPassword" placeholder="再次输入新密码" autocomplete="new-password">
+          <span class="error-msg" id="confirmPasswordError"></span>
+        </div>
+
+        <div class="profile-actions">
+          <a href="/" class="btn btn-secondary">返回</a>
+          <button type="submit" class="btn btn-primary" id="saveBtn">保存修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 灰化肥发灰的小站
+</footer>
+
+<script src="/js/common.js"></script>
+<script>
+/* ============================================================
+   个人中心 — 普通用户编辑自己的昵称 / 邮箱 / 密码
+   数据流参照 admin-users.html：api.get/put + Toast + 字段级错误
+   ============================================================ */
+
+(function () {
+  if (!isLoggedIn()) {
+    goToLogin();
+    return;
+  }
+  updateHeader();
+  loadProfile();
+})();
+
+/* —— 加载本人资料 —— */
+async function loadProfile() {
+  try {
+    const data = await api.get('/users/me');
+    const u = data.data;
+
+    // 顶部横幅
+    document.getElementById('bannerName').textContent = u.username;
+    document.getElementById('bannerEmail').textContent = u.email;
+
+    const avatar = document.getElementById('profileAvatar');
+    if (u.avatar_url) {
+      avatar.innerHTML = `<img src="${escapeHTML(u.avatar_url)}" alt="头像"
+        style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    } else {
+      avatar.textContent = (u.username || '?').charAt(0).toUpperCase();
+    }
+
+    const role = document.getElementById('bannerRole');
+    role.textContent = u.is_admin ? '管理员' : '普通用户';
+    role.style.display = 'inline-block';
+
+    // 表单回填
+    document.getElementById('username').value = u.username;
+    document.getElementById('email').value = u.email;
+
+    // 同步本地缓存，避免 header 显示陈旧信息
+    syncLocalUser(u);
+  } catch (err) {
+    showToast('加载资料失败：' + err.message, 'error');
+  }
+}
+
+/* —— 字段级错误 —— */
+function clearError(field) {
+  const group = document.getElementById(field + 'Group');
+  const error = document.getElementById(field + 'Error');
+  if (group) group.classList.remove('has-error');
+  if (error) error.textContent = '';
+}
+function showError(field, msg) {
+  const group = document.getElementById(field + 'Group');
+  const error = document.getElementById(field + 'Error');
+  if (group) group.classList.add('has-error');
+  if (error) error.textContent = msg;
+}
+
+/* —— 提交保存 —— */
+async function submitProfile(e) {
+  e.preventDefault();
+
+  const username = document.getElementById('username').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const oldPassword = document.getElementById('oldPassword').value;
+  const newPassword = document.getElementById('newPassword').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
+
+  ['username', 'email', 'oldPassword', 'newPassword', 'confirmPassword'].forEach(clearError);
+
+  let valid = true;
+  if (!username || username.length < 2 || username.length > 50) {
+    showError('username', '昵称需要 2~50 个字符');
+    valid = false;
+  }
+  if (!email) {
+    showError('email', '请输入邮箱');
+    valid = false;
+  }
+
+  // 是否在修改密码：任一密码字段非空即视为修改
+  const changingPassword = !!(oldPassword || newPassword || confirmPassword);
+  if (changingPassword) {
+    if (!oldPassword) {
+      showError('oldPassword', '请输入当前密码');
+      valid = false;
+    }
+    if (!newPassword || newPassword.length < 8) {
+      showError('newPassword', '新密码至少 8 位');
+      valid = false;
+    } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(newPassword)) {
+      showError('newPassword', '新密码需同时包含字母和数字');
+      valid = false;
+    }
+    if (confirmPassword !== newPassword) {
+      showError('confirmPassword', '两次输入的新密码不一致');
+      valid = false;
+    }
+  }
+  if (!valid) return;
+
+  const payload = { username: username, email: email };
+  if (changingPassword) {
+    payload.old_password = oldPassword;
+    payload.new_password = newPassword;
+  }
+
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '保存中…';
+  btn.disabled = true;
+
+  try {
+    const data = await api.put('/users/me', payload);
+    showToast('资料已更新');
+
+    // 用返回的最新数据刷新页面与本地缓存
+    const u = data.data;
+    syncLocalUser(u);
+    document.getElementById('bannerName').textContent = u.username;
+    document.getElementById('bannerEmail').textContent = u.email;
+    if (!u.avatar_url) {
+      document.getElementById('profileAvatar').textContent = (u.username || '?').charAt(0).toUpperCase();
+    }
+    updateHeader();
+
+    // 清空密码输入
+    document.getElementById('oldPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.textContent = '保存修改';
+    btn.disabled = false;
+  }
+}
+
+/* —— 将最新用户信息写回 localStorage，保持 header 等处显示一致 —— */
+function syncLocalUser(u) {
+  const cur = getUser() || {};
+  cur.id = u.id;
+  cur.username = u.username;
+  cur.email = u.email;
+  cur.is_admin = u.is_admin;
+  if (u.avatar_url !== undefined) cur.avatar_url = u.avatar_url;
+  localStorage.setItem('user', JSON.stringify(cur));
+}
+</script>
+
+</body>
+</html>

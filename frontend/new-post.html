@@ -2,16 +2,22 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data: https://cdnjs.cloudflare.com;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>写文章 — 我的博客</title>
+  <title>写文章 — 灰化肥发灰的小站</title>
   <link rel="stylesheet" href="/css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
 <header class="site-header">
   <div class="header-inner">
-    <a href="/" class="site-title">我的博客</a>
+    <a href="/" class="site-title">灰化肥发灰的小站</a>
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索文章…" autocomplete="off">
+      <button type="submit" class="search-btn" aria-label="搜索" title="搜索">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
     <nav>
       <ul class="nav-links" id="navLinks"></ul>
     </nav>
@@ -31,13 +37,8 @@
     </div>
 
     <div class="form-group" id="contentGroup">
-      <label for="content">内容</label>
-      <div class="editor-tabs">
-        <button type="button" class="editor-tab active" id="tabEdit" onclick="switchTab('edit')">编辑</button>
-        <button type="button" class="editor-tab" id="tabPreview" onclick="switchTab('preview')">预览</button>
-      </div>
-      <textarea id="content" placeholder="支持 Markdown：# 标题、**粗体**、`代码`、[链接](url)…" required></textarea>
-      <div id="previewPane" class="editor-preview" style="display:none;"></div>
+      <label for="content">内容（支持 Markdown 语法）</label>
+      <textarea id="content" placeholder="支持 Markdown：# 标题、**粗体**、==高亮==、`代码`、[链接](url)…" required></textarea>
       <span class="error-msg" id="contentError"></span>
     </div>
 
@@ -51,7 +52,7 @@
 </main>
 
 <footer class="site-footer">
-  &copy; 2026 我的博客
+  &copy; 2026 灰化肥发灰的小站
 </footer>
 
 <script src="/js/common.js"></script>
@@ -60,12 +61,25 @@
    写文章 / 编辑文章
    ============================================================ */
 
-// 未登录 → 跳转登录页（带上回调地址）
-if (!isLoggedIn()) {
-  goToLogin();
-}
+// 编辑模式：?edit=文章ID（在块外声明，确保所有函数可访问）
+let editID = null;
 
-const editID = getQueryParam('edit'); // 编辑模式：?edit=文章ID
+// 访问控制：未登录跳转登录页，非管理员跳转首页
+(function() {
+  if (!isLoggedIn()) {
+    goToLogin();
+    return;
+  }
+  if (!isAdmin()) {
+    window.location.href = '/';
+    return;
+  }
+  // —— 仅管理员可执行以下编辑器逻辑 ——
+  editID = getQueryParam('edit');
+  init().catch(err => console.error('初始化编辑器失败:', err));
+})();
+
+// —— 函数定义在顶层作用域，闭包正确捕获 editID ——
 
 async function init() {
   updateHeader();
@@ -148,53 +162,6 @@ async function deletePost() {
     showToast(err.message, 'error');
   }
 }
-
-/* —— 编辑器标签切换 + 实时预览 —— */
-
-let activeTab = 'edit';
-
-function switchTab(tab) {
-  activeTab = tab;
-  const textarea = document.getElementById('content');
-  const preview = document.getElementById('previewPane');
-  const tabEdit = document.getElementById('tabEdit');
-  const tabPreview = document.getElementById('tabPreview');
-
-  if (tab === 'edit') {
-    textarea.style.display = 'block';
-    preview.style.display = 'none';
-    tabEdit.classList.add('active');
-    tabPreview.classList.remove('active');
-  } else {
-    // 切换到预览：解析 textarea 内容为 HTML
-    marked.setOptions({ breaks: true, gfm: true });
-    preview.innerHTML = marked.parse(textarea.value)
-      || '<p style="color:var(--text-muted);">还没有内容…</p>';
-    textarea.style.display = 'none';
-    preview.style.display = 'block';
-    tabPreview.classList.add('active');
-    tabEdit.classList.remove('active');
-  }
-}
-
-// 编辑时自动更新预览（如果预览可见）
-document.getElementById('content').addEventListener('input', function () {
-  if (activeTab === 'preview') {
-    marked.setOptions({ breaks: true, gfm: true });
-    const preview = document.getElementById('previewPane');
-    preview.innerHTML = marked.parse(this.value)
-      || '<p style="color:var(--text-muted);">还没有内容…</p>';
-  }
-});
-
-// 提交前确保切回编辑模式，避免校验时找不着 textarea
-const origSubmit = handleSubmit;
-handleSubmit = async function(e) {
-  if (activeTab === 'preview') switchTab('edit');
-  return origSubmit(e);
-};
-
-init();
 </script>
 
 </body>

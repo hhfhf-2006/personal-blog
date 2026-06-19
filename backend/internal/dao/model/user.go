@@ -7,6 +7,7 @@ type User struct {
 	Username     string    `gorm:"column:username"`
 	Email        string    `gorm:"column:email"`
 	PasswordHash string    `gorm:"column:password_hash"`
+	GithubID     *int64    `gorm:"column:github_id;uniqueIndex"`
 	IsAdmin      bool      `gorm:"column:is_admin"`
 	AvatarURL    *string   `gorm:"column:avatar_url"`
 	Bio          *string   `gorm:"column:bio"`

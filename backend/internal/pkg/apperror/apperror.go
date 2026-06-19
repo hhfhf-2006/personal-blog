@@ -11,6 +11,9 @@ const (
 
 	// KindInternal 表示服务器内部出了问题（我们的问题），应该返回 500
 	KindInternal
+
+	// KindNotFound 表示请求的资源不存在，应该返回 404
+	KindNotFound
 )
 
 // AppError 是一个携带"错误种类"信息的自定义错误
@@ -45,6 +48,10 @@ func Internal(msg string) *AppError {
 	return &AppError{Kind: KindInternal, Message: msg}
 }
 
+func NotFound(msg string) *AppError {
+	return &AppError{Kind: KindNotFound, Message: msg}
+}
+
 func WrapInternal(err error) *AppError {
 	return &AppError{Kind: KindInternal, Message: "服务器内部错误", Err: err}
 }
@@ -54,4 +61,10 @@ func WrapInternal(err error) *AppError {
 func IsBadRequest(err error) bool {
 	var ae *AppError
 	return errors.As(err, &ae) && ae.Kind == KindBadRequest
+}
+
+// IsNotFound 快速判断一个错误是不是"资源不存在"
+func IsNotFound(err error) bool {
+	var ae *AppError
+	return errors.As(err, &ae) && ae.Kind == KindNotFound
 }

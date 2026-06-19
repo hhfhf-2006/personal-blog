@@ -1,0 +1,611 @@
+@import "fonts/clear-sans.css";
+/* ============================================================
+   2048 — Nord 北欧极简配色
+   基于 Nord 调色板：Snow Storm 底色 + Frost/Aurora 数字 tile
+   ============================================================ */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #ECEFF4;          /* nord6 — 冰霜白 */
+  color: #4C566A;               /* nord3 — 极夜灰文字 */
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+}
+
+body {
+  margin: 80px 0;
+}
+
+.heading:after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+h1.title {
+  font-size: 80px;
+  font-weight: bold;
+  margin: 0;
+  display: block;
+  float: left;
+  color: #2E3440;               /* nord0 */
+}
+@keyframes $animation-name {
+  0% {
+    top: 25px;
+    opacity: 1;
+  }
+  100% {
+    top: -50px;
+    opacity: 0;
+  }
+}
+.scores-container {
+  float: right;
+  text-align: right;
+}
+
+.score-container,
+.best-container {
+  position: relative;
+  display: inline-block;
+  background: #3B4252;          /* nord1 — 深色按钮 */
+  padding: 15px 25px;
+  font-size: 25px;
+  height: 25px;
+  line-height: 47px;
+  font-weight: bold;
+  border-radius: 3px;
+  color: #ECEFF4;               /* nord6 浅色文字 */
+  margin-top: 8px;
+  text-align: center;
+}
+.score-container:after,
+.best-container:after {
+  position: absolute;
+  width: 100%;
+  top: 10px;
+  left: 0;
+  text-transform: uppercase;
+  font-size: 13px;
+  line-height: 13px;
+  text-align: center;
+  color: #D8DEE9;               /* nord4 */
+}
+.score-container .score-addition,
+.best-container .score-addition {
+  position: absolute;
+  right: 30px;
+  font-size: 25px;
+  line-height: 25px;
+  font-weight: bold;
+  color: rgba(76, 86, 106, 0.9); /* nord3 */
+  z-index: 100;
+  animation: move-up 600ms ease-in;
+  animation-fill-mode: both;
+}
+
+.score-container:after {
+  content: "Score";
+}
+
+.best-container:after {
+  content: "Best";
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 10px;
+  line-height: 1.65;
+}
+
+a {
+  color: #5E81AC;               /* nord10 */
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+strong.important {
+  text-transform: uppercase;
+}
+
+hr {
+  border: none;
+  border-bottom: 1px solid #D8DEE9; /* nord4 */
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+.container {
+  width: 500px;
+  margin: 0 auto;
+}
+@keyframes $animation-name {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.game-container {
+  margin-top: 40px;
+  position: relative;
+  padding: 15px;
+  cursor: default;
+  -webkit-touch-callout: none;
+  -ms-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  touch-action: none;
+  background: #4C566A;          /* nord3 — 深蓝灰网格背景 */
+  border-radius: 6px;
+  width: 500px;
+  height: 500px;
+  box-sizing: border-box;
+}
+.game-container .game-message {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(229, 233, 240, 0.7); /* nord5 半透明覆盖 */
+  z-index: 100;
+  text-align: center;
+  animation: fade-in 800ms ease 1200ms;
+  animation-fill-mode: both;
+}
+.game-container .game-message p {
+  font-size: 60px;
+  font-weight: bold;
+  height: 60px;
+  line-height: 60px;
+  margin-top: 222px;
+  color: #2E3440;               /* nord0 */
+}
+.game-container .game-message .lower {
+  display: block;
+  margin-top: 59px;
+}
+.game-container .game-message a {
+  display: inline-block;
+  background: #5E81AC;          /* nord10 — 冰蓝按钮 */
+  border-radius: 3px;
+  padding: 0 20px;
+  text-decoration: none;
+  color: #ECEFF4;               /* nord6 */
+  height: 40px;
+  line-height: 42px;
+  margin-left: 9px;
+}
+.game-container .game-message a.keep-playing-button {
+  display: none;
+}
+.game-container .game-message.game-won {
+  background: rgba(163, 190, 140, 0.55); /* nord14 极光绿 */
+  color: #2E3440;               /* nord0 */
+}
+.game-container .game-message.game-won a.keep-playing-button {
+  display: inline-block;
+}
+.game-container .game-message.game-won, .game-container .game-message.game-over {
+  display: block;
+}
+
+.grid-container {
+  position: absolute;
+  z-index: 1;
+}
+
+.grid-row {
+  margin-bottom: 15px;
+}
+.grid-row:last-child {
+  margin-bottom: 0;
+}
+.grid-row:after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.grid-cell {
+  width: 106.25px;
+  height: 106.25px;
+  margin-right: 15px;
+  float: left;
+  border-radius: 3px;
+  background: rgba(216, 222, 233, 0.5); /* nord4 半透明空格 */
+}
+.grid-cell:last-child {
+  margin-right: 0;
+}
+
+.tile-container {
+  position: absolute;
+  z-index: 2;
+}
+
+.tile,
+.tile .tile-inner {
+  width: 107px;
+  height: 107px;
+  line-height: 107px;
+}
+.tile.tile-position-1-1 {
+  transform: translate(0px, 0px);
+}
+.tile.tile-position-1-2 {
+  transform: translate(0px, 121px);
+}
+.tile.tile-position-1-3 {
+  transform: translate(0px, 242px);
+}
+.tile.tile-position-1-4 {
+  transform: translate(0px, 363px);
+}
+.tile.tile-position-2-1 {
+  transform: translate(121px, 0px);
+}
+.tile.tile-position-2-2 {
+  transform: translate(121px, 121px);
+}
+.tile.tile-position-2-3 {
+  transform: translate(121px, 242px);
+}
+.tile.tile-position-2-4 {
+  transform: translate(121px, 363px);
+}
+.tile.tile-position-3-1 {
+  transform: translate(242px, 0px);
+}
+.tile.tile-position-3-2 {
+  transform: translate(242px, 121px);
+}
+.tile.tile-position-3-3 {
+  transform: translate(242px, 242px);
+}
+.tile.tile-position-3-4 {
+  transform: translate(242px, 363px);
+}
+.tile.tile-position-4-1 {
+  transform: translate(363px, 0px);
+}
+.tile.tile-position-4-2 {
+  transform: translate(363px, 121px);
+}
+.tile.tile-position-4-3 {
+  transform: translate(363px, 242px);
+}
+.tile.tile-position-4-4 {
+  transform: translate(363px, 363px);
+}
+
+.tile {
+  position: absolute;
+  transition: 100ms ease-in-out;
+  transition-property: transform;
+}
+.tile .tile-inner {
+  border-radius: 3px;
+  background: #E5E9F0;          /* nord5 默认 tile 底色 */
+  text-align: center;
+  font-weight: bold;
+  z-index: 10;
+  font-size: 55px;
+  color: #2E3440;               /* nord0 深色数字 */
+}
+
+/* —— Nord tile 色阶：Snow → Frost → Aurora —— */
+
+.tile.tile-2 .tile-inner {
+  background: #E5E9F0;          /* nord5 */
+  color: #4C566A;               /* nord3 */
+}
+.tile.tile-4 .tile-inner {
+  background: #D8DEE9;          /* nord4 */
+  color: #4C566A;               /* nord3 */
+}
+.tile.tile-8 .tile-inner {
+  color: #ECEFF4;               /* nord6 白字 */
+  background: #88C0D0;          /* nord8 冰青 */
+}
+.tile.tile-16 .tile-inner {
+  color: #ECEFF4;
+  background: #81A1C1;          /* nord9 冰蓝 */
+}
+.tile.tile-32 .tile-inner {
+  color: #ECEFF4;
+  background: #5E81AC;          /* nord10 深冰蓝 */
+}
+.tile.tile-64 .tile-inner {
+  color: #ECEFF4;
+  background: #B48EAD;          /* nord15 极光紫 */
+}
+.tile.tile-128 .tile-inner {
+  color: #2E3440;               /* nord0 深色字 */
+  background: #A3BE8C;          /* nord14 极光绿 */
+  font-size: 45px;
+}
+@media screen and (max-width: 520px) {
+  .tile.tile-128 .tile-inner {
+    font-size: 25px;
+  }
+}
+.tile.tile-256 .tile-inner {
+  color: #2E3440;
+  background: #EBCB8B;          /* nord13 极光黄 */
+  font-size: 45px;
+}
+@media screen and (max-width: 520px) {
+  .tile.tile-256 .tile-inner {
+    font-size: 25px;
+  }
+}
+.tile.tile-512 .tile-inner {
+  color: #ECEFF4;
+  background: #D08770;          /* nord12 极光橙 */
+  font-size: 45px;
+}
+@media screen and (max-width: 520px) {
+  .tile.tile-512 .tile-inner {
+    font-size: 25px;
+  }
+}
+.tile.tile-1024 .tile-inner {
+  color: #ECEFF4;
+  background: #BF616A;          /* nord11 极光红 */
+  font-size: 35px;
+}
+@media screen and (max-width: 520px) {
+  .tile.tile-1024 .tile-inner {
+    font-size: 15px;
+  }
+}
+.tile.tile-2048 .tile-inner {
+  color: #ECEFF4;
+  background: #8FBCBB;          /* nord7 冰霜蓝绿 */
+  font-size: 35px;
+}
+@media screen and (max-width: 520px) {
+  .tile.tile-2048 .tile-inner {
+    font-size: 15px;
+  }
+}
+.tile.tile-super .tile-inner {
+  color: #ECEFF4;
+  background: #2E3440;          /* nord0 极夜黑 */
+  font-size: 30px;
+}
+@media screen and (max-width: 520px) {
+  .tile.tile-super .tile-inner {
+    font-size: 10px;
+  }
+}
+@keyframes $animation-name {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.tile-new .tile-inner {
+  animation: appear 200ms ease 100ms;
+  animation-fill-mode: backwards;
+}
+@keyframes $animation-name {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.tile-merged .tile-inner {
+  z-index: 20;
+  animation: pop 200ms ease 100ms;
+  animation-fill-mode: backwards;
+}
+
+.above-game:after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.game-intro {
+  float: left;
+  line-height: 42px;
+  margin-bottom: 0;
+}
+
+.restart-button {
+  display: inline-block;
+  background: #5E81AC;          /* nord10 冰蓝按钮 */
+  border-radius: 3px;
+  padding: 0 20px;
+  text-decoration: none;
+  color: #ECEFF4;               /* nord6 */
+  height: 40px;
+  line-height: 42px;
+  display: block;
+  text-align: center;
+  float: right;
+}
+
+.game-explanation {
+  margin-top: 50px;
+  color: #4C566A;               /* nord3 */
+}
+
+/* —— 响应式 —— */
+@media screen and (max-width: 520px) {
+  html,
+  body {
+    font-size: 15px;
+  }
+  body {
+    margin: 20px 0;
+    padding: 0 20px;
+  }
+  h1.title {
+    font-size: 27px;
+    margin-top: 15px;
+  }
+  .container {
+    width: 280px;
+    margin: 0 auto;
+  }
+  .score-container,
+  .best-container {
+    margin-top: 0;
+    padding: 15px 10px;
+    min-width: 40px;
+  }
+  .heading {
+    margin-bottom: 10px;
+  }
+  .game-intro {
+    width: 55%;
+    display: block;
+    box-sizing: border-box;
+    line-height: 1.65;
+  }
+  .restart-button {
+    width: 42%;
+    padding: 0;
+    display: block;
+    box-sizing: border-box;
+    margin-top: 2px;
+  }
+  .game-container {
+    margin-top: 17px;
+    position: relative;
+    padding: 10px;
+    cursor: default;
+    -webkit-touch-callout: none;
+    -ms-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: none;
+    background: #4C566A;        /* nord3 */
+    border-radius: 6px;
+    width: 280px;
+    height: 280px;
+    box-sizing: border-box;
+  }
+  .game-container .game-message {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(229, 233, 240, 0.7);
+    z-index: 100;
+    text-align: center;
+    animation: fade-in 800ms ease 1200ms;
+    animation-fill-mode: both;
+  }
+  .game-container .game-message p {
+    font-size: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    margin-top: 90px !important;
+  }
+  .game-container .game-message .lower {
+    margin-top: 30px !important;
+  }
+  .game-container .game-message a {
+    display: inline-block;
+    background: #5E81AC;        /* nord10 */
+    border-radius: 3px;
+    padding: 0 20px;
+    text-decoration: none;
+    color: #ECEFF4;
+    height: 40px;
+    line-height: 42px;
+    margin-left: 9px;
+  }
+  .game-container .game-message a.keep-playing-button {
+    display: none;
+  }
+  .game-container .game-message.game-won {
+    background: rgba(163, 190, 140, 0.55);
+    color: #2E3440;
+  }
+  .game-container .game-message.game-won a.keep-playing-button {
+    display: inline-block;
+  }
+  .game-container .game-message.game-won, .game-container .game-message.game-over {
+    display: block;
+  }
+  .grid-row {
+    margin-bottom: 10px;
+  }
+  .grid-row:last-child {
+    margin-bottom: 0;
+  }
+  .grid-cell {
+    width: 57.5px;
+    height: 57.5px;
+    margin-right: 10px;
+    float: left;
+    border-radius: 3px;
+    background: rgba(216, 222, 233, 0.5);
+  }
+  .grid-cell:last-child {
+    margin-right: 0;
+  }
+  .tile-container {
+    position: absolute;
+    z-index: 2;
+  }
+  .tile,
+  .tile .tile-inner {
+    width: 58px;
+    height: 58px;
+    line-height: 58px;
+  }
+  .tile.tile-position-1-1 { transform: translate(0px, 0px); }
+  .tile.tile-position-1-2 { transform: translate(0px, 67px); }
+  .tile.tile-position-1-3 { transform: translate(0px, 135px); }
+  .tile.tile-position-1-4 { transform: translate(0px, 202px); }
+  .tile.tile-position-2-1 { transform: translate(67px, 0px); }
+  .tile.tile-position-2-2 { transform: translate(67px, 67px); }
+  .tile.tile-position-2-3 { transform: translate(67px, 135px); }
+  .tile.tile-position-2-4 { transform: translate(67px, 202px); }
+  .tile.tile-position-3-1 { transform: translate(135px, 0px); }
+  .tile.tile-position-3-2 { transform: translate(135px, 67px); }
+  .tile.tile-position-3-3 { transform: translate(135px, 135px); }
+  .tile.tile-position-3-4 { transform: translate(135px, 202px); }
+  .tile.tile-position-4-1 { transform: translate(202px, 0px); }
+  .tile.tile-position-4-2 { transform: translate(202px, 67px); }
+  .tile.tile-position-4-3 { transform: translate(202px, 135px); }
+  .tile.tile-position-4-4 { transform: translate(202px, 202px); }
+  .tile .tile-inner {
+    font-size: 35px;
+  }
+  .game-message p {
+    font-size: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    margin-top: 90px !important;
+  }
+  .game-message .lower {
+    margin-top: 30px !important;
+  }
+}/*# sourceMappingURL=main.css.map */
